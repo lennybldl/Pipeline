@@ -1,5 +1,0 @@
--   Check changelog update
--   Check UI version updated
--   Check no unwanted files
--   Set debug tooltips false
--   Works with start.bat
