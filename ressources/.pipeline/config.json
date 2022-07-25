@@ -1,0 +1,72 @@
+{
+    "abstract": {
+        "index_padding": 4,
+        "rules": {
+            "global": {
+                "_same_as_": [],
+                "create": {
+                    "windows": {
+                        "commands": [
+                            "pipe\\global\\create.py"
+                        ]
+                    }
+                },
+                "delete": {
+                    "windows": {
+                        "commands": [
+                            "pipe\\global\\delete.py"
+                        ]
+                    }
+                }
+            },
+            "asset": {
+                "_same_as_": [
+                    "global"
+                ]
+            },
+            "task": {
+                "_same_as_": [
+                    "global"
+                ]
+            },
+            "workfile": {
+                "_same_as_": [
+                    "global"
+                ],
+                "save": {
+                    "windows": {
+                        "commands": [
+                            "pipe\\workfile\\save.py"
+                        ]
+                    }
+                },
+                "increment": {
+                    "windows": {
+                        "commands": [
+                            "pipe\\workfile\\increment.py"
+                        ]
+                    }
+                },
+                "archive": {
+                    "windows": {
+                        "commands": [
+                            "pipe\\workfile\\archive.py"
+                        ]
+                    }
+                },
+                "publish": {
+                    "windows": {
+                        "commands": [
+                            "pipe\\workfile\\publish.py"
+                        ]
+                    }
+                }
+            }
+        },
+        "id": {}
+    },
+    "concrete": {
+        "id": {},
+        "path": {}
+    }
+}

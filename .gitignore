@@ -1,5 +1,3 @@
 *.pyc
 .history/
 venv/
-data/
-dev/
