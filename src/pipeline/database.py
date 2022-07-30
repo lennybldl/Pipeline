@@ -8,6 +8,10 @@ from python_core.types import items, dictionaries
 PACKAGE_PATH = items.File(__file__).get_upstream(3)
 RESSOURCES = PACKAGE_PATH.get_folder("ressources")
 
+# static values
+
+STATIC_CONCEPTS = {"global": 1, "asset": 2, "task": 3, "workfile": 4}
+
 
 class Database(object):
     """Manage the application data."""

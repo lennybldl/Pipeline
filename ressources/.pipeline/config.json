@@ -1,68 +1,82 @@
 {
-    "abstract": {
-        "index_padding": 4,
-        "rules": {
-            "global": {
-                "_same_as_": [],
-                "create": {
-                    "windows": {
-                        "commands": [
-                            "pipe\\global\\create.py"
-                        ]
-                    }
-                },
-                "delete": {
-                    "windows": {
-                        "commands": [
-                            "pipe\\global\\delete.py"
-                        ]
+    "concept": {
+        "id": {
+            "1": {
+                "name": "global",
+                "rules": {
+                    "_same_as_": [],
+                    "create": {
+                        "windows": {
+                            "commands": [
+                                "concepts\\global\\create.py"
+                            ]
+                        }
+                    },
+                    "delete": {
+                        "windows": {
+                            "commands": [
+                                "concepts\\global\\delete.py"
+                            ]
+                        }
                     }
                 }
             },
-            "asset": {
-                "_same_as_": [
-                    "global"
-                ]
+            "2": {
+                "name": "asset",
+                "rules": {
+                    "_same_as_": [
+                        "c1"
+                    ]
+                }
             },
-            "task": {
-                "_same_as_": [
-                    "global"
-                ]
+            "3": {
+                "name": "task",
+                "rules": {
+                    "_same_as_": [
+                        "c1"
+                    ]
+                }
             },
-            "workfile": {
-                "_same_as_": [
-                    "global"
-                ],
-                "save": {
-                    "windows": {
-                        "commands": [
-                            "pipe\\workfile\\save.py"
-                        ]
-                    }
-                },
-                "increment": {
-                    "windows": {
-                        "commands": [
-                            "pipe\\workfile\\increment.py"
-                        ]
-                    }
-                },
-                "archive": {
-                    "windows": {
-                        "commands": [
-                            "pipe\\workfile\\archive.py"
-                        ]
-                    }
-                },
-                "publish": {
-                    "windows": {
-                        "commands": [
-                            "pipe\\workfile\\publish.py"
-                        ]
+            "4": {
+                "name": "workfile",
+                "rules": {
+                    "_same_as_": [
+                        "c1"
+                    ],
+                    "save": {
+                        "windows": {
+                            "commands": [
+                                "concepts\\workfile\\save.py"
+                            ]
+                        }
+                    },
+                    "increment": {
+                        "windows": {
+                            "commands": [
+                                "concepts\\workfile\\increment.py"
+                            ]
+                        }
+                    },
+                    "archive": {
+                        "windows": {
+                            "commands": [
+                                "concepts\\workfile\\archive.py"
+                            ]
+                        }
+                    },
+                    "publish": {
+                        "windows": {
+                            "commands": [
+                                "concepts\\workfile\\publish.py"
+                            ]
+                        }
                     }
                 }
             }
-        },
+        }
+    },
+    "abstract": {
+        "index_padding": 4,
         "id": {}
     },
     "concrete": {

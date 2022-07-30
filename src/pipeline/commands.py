@@ -1,18 +1,14 @@
 """Manage the package common commands."""
 import os
-import sys
+
 
 from python_core.types import dictionaries, items, strings
 
 from pipeline import database
+from pipeline.internal import command_calls
 
 DATABASE = database.Database(software="windows", py_version=3)
 
-# Use different modules to import modules considering the python version
-if DATABASE.py_version == 2:
-    import imp
-else:
-    import importlib.util
 
 # edit project
 
@@ -51,11 +47,39 @@ def create_project(path):
     initialize(path)
 
 
-def add_abstract_step(_type, parent, **properties):
+def add_abstract_concept(name, **properties):
+    """Add an abstract concept to the config.
+
+     Arguments:
+        name (str): The name to give to the concept.
+
+    Returns:
+        int: The id of the added abstract concept.
+    """
+
+    config = DATABASE.config
+
+    # set default values for an abstract step
+    _id = get_available_abstract_concept_id()
+    properties["name"] = name
+    # add the rules for the abstract concept
+    properties["rules"] = properties.get("rules", {"_same_as_": list()})
+
+    # write the new config
+    config.set("concept.id.{}".format(_id), properties)
+    DATABASE.config = config
+
+    # log the creation
+    DATABASE.logger.debug("Add abstract concept. ID : '{}'".format(_id))
+
+    return _id
+
+
+def add_abstract_step(concept, parent, **properties):
     """Add an abstract step to the config.
 
     Arguments:
-        _type (str): The type of step. ("asset", "task").
+        concept (int): The index of the concept the step belongs to.
         parent (int): The id of the parent of this step.
 
     Returns:
@@ -63,22 +87,30 @@ def add_abstract_step(_type, parent, **properties):
     """
     config = DATABASE.config
 
+    # get useful values
+    concept_name = {v: k for k, v in database.STATIC_CONCEPTS.items()}.get(concept)
+
     # set default values for an abstract step
     _id = get_available_abstract_id()
-    properties["type"] = _type
     properties["parent"] = parent
-    properties["name"] = properties.get("name", "{}{}".format(_type, _id) + "_{index}")
-    if _type == "task":
-        properties["task"] = properties.get("task", "{}{}".format(_type, _id))
+    properties["concept"] = concept
+    properties["name"] = properties.get(
+        "name", "{}{}".format(concept_name, _id) + "_{index}"
+    )
+    if concept_name == "task":
+        properties["task"] = properties.get("task", "{}{}".format(concept_name, _id))
 
     # add the rules for the abstract step
-    rules = properties.get("rules")
-    if rules is None:
-        properties["rules"] = {"_same_as_": [_type]}
+    properties["rules"] = properties.get(
+        "rules", {"_same_as_": ["c{}".format(concept)]}
+    )
 
     # write the new config
     config.set("abstract.id.{}".format(_id), properties)
     DATABASE.config = config
+
+    # log the creation
+    DATABASE.logger.debug("Add abstract step. ID : '{}'".format(_id))
 
     return _id
 
@@ -111,6 +143,9 @@ def add_concrete_step(abstract_id, parent, **properties):
     )
     DATABASE.config = config
 
+    # log the creation
+    DATABASE.logger.debug("Add concrete step. ID : '{}'".format(_id))
+
     return _id
 
 
@@ -125,33 +160,27 @@ def call(name, _id):
     # get the commands to call
     rules = get_rules(_id)
     commands = rules.get("{}.{}".format(name, DATABASE.software), dict())
-    commands = commands.get("commands")
+    commands = commands.get("commands", list())
 
     # call the commands
     for command in commands:
-        command = DATABASE.rules_path.get_file(command)
-
-        # import the module
-        if DATABASE.py_version == 2:
-            module = imp.load_source(command.name, command.path)
-        else:
-            spec = importlib.util.spec_from_file_location(
-                command.name.replace(".py", ""), command.path
-            )
-            module = importlib.util.module_from_spec(spec)
-            sys.modules[spec.name] = module
-            spec.loader.exec_module(module)
-
-        # execute the module
-        if hasattr(module, "execute"):
-            module.execute(_id)
-        else:
-            DATABASE.logger.warning(
-                "Could not find an 'execute' function in '{}'".format(command)
-            )
+        if command.endswith(".py"):
+            command_calls.call_python_command(command, _id)
 
 
 # get available ids
+
+
+def get_available_abstract_concept_id():
+    """Get the next available abstract concept id.
+
+    Returns:
+        int: The available id.
+    """
+    config = DATABASE.config
+    existing_ids = list(map(int, config.get("concept.id").keys()))
+    potential_ids = set(range(1, len(existing_ids) + 2))
+    return list(potential_ids - set(existing_ids))[0]
 
 
 def get_available_abstract_id():
@@ -285,7 +314,7 @@ def get_step_name(_id):
                 break
             # get the parent asset
             parent_concrete_data, parent_abstract_data = get_step_data(parent_id)
-            if parent_abstract_data.get("type") == "asset":
+            if parent_abstract_data.get("concept") == 2:
                 asset_name = get_step_name(parent_id)
                 break
             parent_id = parent_concrete_data.get("parent")
@@ -311,20 +340,23 @@ def get_step_name(_id):
 
 
 def get_rules(step):
-    """Get the rules that can be performed on a particular step type or abstract id.
+    """Get the rules that can be performed.
+
+    It can find a particular step type, and abstract step id or an abstract concept id.
 
     Arguments:
-        step (str, int): The name of the step type to get the rules from
-            or the id of an abstract step.
+        step (str, int): The id to get the rules from.
+            If it's an integer, the abstract step id.
+            If it's a string, the concept id written "cId".
 
     Returns:
         list: A list of rules names.
     """
     config = DATABASE.config
 
-    # get the rules either from a step type of an abstract step id
+    # get the rules either from a step type of an abstract step or an abstract concept
     if isinstance(step, str):
-        rules_path = "abstract.rules.{}".format(step)
+        rules_path = "concept.id.{}.rules".format(step.replace("c", ""))
     else:
         rules_path = "abstract.id.{}.rules".format(step)
 

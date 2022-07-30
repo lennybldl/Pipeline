@@ -2,9 +2,10 @@
 
 import os
 
+from python_core.types import items
 
 VERSION = "2.0.0"
-PATH = os.path.abspath(os.path.join(__file__, *[".."] * 3))
+PATH = items.File(__file__).get_upstream(3)
 
 
 def doc():
