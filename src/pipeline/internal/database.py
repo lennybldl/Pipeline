@@ -1,22 +1,24 @@
 """Manage the application's data."""
 
 from python_core import logging
-from python_core.types import items, dictionaries
+from python_core.types import items
+
+from pipeline.internal import config as _config_
 
 # paths in package
 
-PACKAGE_PATH = items.File(__file__).get_upstream(3)
+PACKAGE_PATH = items.File(__file__).get_upstream(4)
 RESSOURCES = PACKAGE_PATH.get_folder("ressources")
 
 # static values
 
-STATIC_CONCEPTS = {"global": 1, "asset": 2, "task": 3, "workfile": 4}
+STATIC_CONCEPTS = {"global": 0, "asset": 1, "task": 2, "workfile": 3}
 
 
 class Database(object):
     """Manage the application data."""
 
-    _instance = None  # str : The database instance.
+    _instance = None  # Database : The database instance.
     software = None  # str : The software we're executing the pipeline from.
     py_version = None  # int : The python version used by the software we're in.
 
@@ -27,17 +29,20 @@ class Database(object):
     rules_path = None  # str : The path to the rules.
     log_path = None  # str : The path to the logs file.
 
-    def __new__(cls, software, py_version):
+    _config = _config_.Config()  # Config : The config object
+
+    def __new__(cls, software="windows", py_version=3):
         """Override the __new__ method to always return the same instance.
 
-        Arguments:
-            software (str): The software we're executing the pipeline on.
-            py_version (int): The python version used by the software we're in.
+        Keyword Arguments:
+            software (str, optional): The software we're executing the pipeline on.
+                Default to "windows".
+            py_version (int, optional): The python version used by the software.
+                Default to 3.
 
         Returns:
             Database: An instance of the Database class.
         """
-
         if not cls._instance:
             cls._instance = super(Database, cls).__new__(cls)
             cls.software = software
@@ -45,7 +50,7 @@ class Database(object):
             cls.logger = logging.Logger("Pipeline")
         return cls._instance
 
-    # methods
+    # Methods
 
     def get_path(self):
         """Get the project's path.
@@ -69,16 +74,16 @@ class Database(object):
         self.rules_path = self.pipeline_path.get_folder("rules")
         self.log_path = self.pipeline_path.get_file("log.log")
 
+        # set the config path
+        self._config.path = self.config_path
+
     def get_config(self):
         """Get the config from the json file.
 
         Returns:
             dict: The config.
         """
-
-        config = dictionaries.OrderedDictionary()
-        config.path = self.config_path
-        return config.load()
+        return self._config.load()
 
     def set_config(self, config):
         """Write the new config.
@@ -86,10 +91,10 @@ class Database(object):
         Arguments:
             config (dict): The dictionnary to write in the config.
         """
-        config_dict = dictionaries.OrderedDictionary(config)
-        config_dict.dump(self.config_path)
+        self._config = config
+        self._config.dump()
 
-    # properties
+    # Properties
 
     path = property(get_path, set_path)
     config = property(get_config, set_config)

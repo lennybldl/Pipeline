@@ -2,7 +2,7 @@
 
 import sys
 
-from pipeline import database
+from pipeline.internal import database
 
 DATABASE = database.Database(software="windows", py_version=3)
 
