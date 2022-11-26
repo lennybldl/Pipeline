@@ -1,0 +1,124 @@
+{
+    "colors": {
+        "PRIMARY_COLOR": "#61C3D4",
+        "PRIMARY_TEXT_COLOR": "#E3E8F1",
+        "PRIMARY_BACKGROUND_COLOR": "#21252b",
+        "SECONDARY_BACKGROUND_COLOR": "#404754",
+        "NEUTRAL_TEXT_COLOR": "#abb2bf",
+        "NEUTRAL_BORDERS_COLORS": "1px solid #191d21",
+        "NEUTRAL_BACKGROUND_COLOR": "#282c34",
+        "SELECTED_COLOR": "#323842",
+        "HOVERED_COLOR": "#838A97",
+        "CLICKED_COLOR": "#abb2bf",
+        "DISABLED_COLOR": "#636b78"
+    },
+    "images": [
+        "QTreeView_OpenArrow.svg",
+        "QTreeView_ClosedArrow.svg",
+        "QTreeView_VLine.svg"
+    ],
+    "style_factory": "Fusion",
+    "theme": {
+        "QWidget": {
+            "font-family": "Roboto Lt",
+            "color": "{NEUTRAL_TEXT_COLOR}",
+            "background-color": "{NEUTRAL_BACKGROUND_COLOR}",
+            ":disabled": {
+                "color": "{DISABLED_COLOR}"
+            }
+        },
+        "QMainWindow": {
+            "background-color": "{PRIMARY_BACKGROUND_COLOR}"
+        },
+        "QMenuBar": {
+            "height": "25px",
+            ":active": {
+                "background-color": "{NEUTRAL_BACKGROUND_COLOR}"
+            },
+            ":!active": {
+                "background-color": "{PRIMARY_BACKGROUND_COLOR}"
+            },
+            "::item": {
+                ":pressed": {
+                    "background-color": "{SELECTED_COLOR}"
+                }
+            }
+        },
+        "QMenu": {
+            "background-color": "{PRIMARY_BACKGROUND_COLOR}",
+            "::item": {
+                ":selected": {
+                    "background-color": "{SELECTED_COLOR}"
+                }
+            }
+        },
+        "QTabWidget": {
+            "::pane": {
+                "top": "-1px",
+                "border": "{NEUTRAL_BORDERS_COLORS}"
+            }
+        },
+        "QTabBar": {
+            "::tab": {
+                "padding": "10px",
+                "background-color": "{PRIMARY_BACKGROUND_COLOR}",
+                "border-bottom": "{NEUTRAL_BORDERS_COLORS}",
+                ":selected": {
+                    "background-color": "{NEUTRAL_BACKGROUND_COLOR}",
+                    "border-bottom": "1px solid {NEUTRAL_TEXT_COLOR}"
+                }
+            }
+        },
+        "QTreeView": {
+            "show-decoration-selected": 0,
+            "background-color": "{PRIMARY_BACKGROUND_COLOR}",
+            "::item": {
+                ":selected": {
+                    "selection-background-color": "{SELECTED_COLOR}"
+                }
+            },
+            "::branch": {
+                ":open": {
+                    ":has-children": {
+                        "border-image": "none",
+                        "image": "url({QTreeView_OpenArrow.svg})"
+                    }
+                },
+                ":closed": {
+                    ":has-children": {
+                        "border-image": "none",
+                        "image": "url({QTreeView_ClosedArrow.svg})"
+                    }
+                },
+                ":has-siblings": {
+                    ":!adjoins-item": {
+                        "border-image": "url({QTreeView_VLine.svg}) 0"
+                    }
+                }
+            }
+        },
+        "QListView": {
+            "background-color": "{PRIMARY_BACKGROUND_COLOR}",
+            "::item": {
+                ":selected": {
+                    "background-color": "{SELECTED_COLOR}"
+                }
+            }
+        },
+        "QGroupBox": {
+            "border": "{NEUTRAL_BORDERS_COLORS}"
+        },
+        "QPushButton": {
+            "padding": "8px",
+            "border-radius": "5%",
+            "color": "{PRIMARY_TEXT_COLOR}",
+            "background-color": "{SECONDARY_BACKGROUND_COLOR}",
+            ":hover": {
+                "background-color": "{HOVERED_COLOR}"
+            },
+            ":pressed": {
+                "background-color": "{CLICKED_COLOR}"
+            }
+        }
+    }
+}

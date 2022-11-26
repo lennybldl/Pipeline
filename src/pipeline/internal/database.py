@@ -1,5 +1,7 @@
 """Manage the application's data."""
 
+import sys
+
 from python_core import logging
 from python_core.types import items
 
@@ -8,7 +10,10 @@ from pipeline.internal import config as _config_
 # paths in package
 
 PACKAGE_PATH = items.File(__file__).get_upstream(4)
-RESSOURCES = PACKAGE_PATH.get_folder("ressources")
+RESOURCES = PACKAGE_PATH.get_folder("resources")
+IMAGES = RESOURCES.get_folder("images")
+FONTS = RESOURCES.get_folder("fonts")
+THEMES = RESOURCES.get_folder("themes")
 
 # static values
 
@@ -20,7 +25,7 @@ class Database(object):
 
     _instance = None  # Database : The database instance.
     software = None  # str : The software we're executing the pipeline from.
-    py_version = None  # int : The python version used by the software we're in.
+    python_version = sys.version_info  # The software's python version.
 
     _path = None  # str : The documentation path.
     project_name = None  # str : The project's name
@@ -31,14 +36,12 @@ class Database(object):
 
     _config = _config_.Config()  # Config : The config object
 
-    def __new__(cls, software="windows", py_version=3):
+    def __new__(cls, software="windows"):
         """Override the __new__ method to always return the same instance.
 
         Keyword Arguments:
             software (str, optional): The software we're executing the pipeline on.
                 Default to "windows".
-            py_version (int, optional): The python version used by the software.
-                Default to 3.
 
         Returns:
             Database: An instance of the Database class.
@@ -46,7 +49,6 @@ class Database(object):
         if not cls._instance:
             cls._instance = super(Database, cls).__new__(cls)
             cls.software = software
-            cls.py_version = py_version
             cls.logger = logging.Logger("Pipeline")
         return cls._instance
 

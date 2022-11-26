@@ -6,17 +6,6 @@ from python_core.types import dictionaries
 class Config(dictionaries.OrderedDictionary):
     """Manage elements of the config."""
 
-    def __init__(self, *args, **kwargs):
-        """Initialize the config."""
-
-        super(Config, self).__init__(*args, **kwargs)
-
-        from pipeline import api
-
-        self.api = api
-
-    # Methods
-
     def get_concept_id(self, _id):
         """Get a concept id.
 
@@ -26,22 +15,26 @@ class Config(dictionaries.OrderedDictionary):
         Returns:
             Concept: The concept as a Concept.
         """
-        return self.api.CONCEPT(_id)
+        from pipeline.api import concepts
 
-    def get_abstract_id(self, _id):
-        """Get an abstract step id.
+        return concepts.Concept(_id)
+
+    def get_theoretical_step_id(self, _id):
+        """Get a theoretical step id.
 
         Arguments:
-            _id (int): The id of the abstract step.
+            _id (int): The id of the theoretical step.
 
         Returns:
-            AbstractStep: The step as an AbstractStep.
+            TheoreticalStep: The step as an TheoreticalStep.
         """
-        config = self.load()
-        _type = config.get("abstract.id.{}.type".format(_id))
-        return self.api.ABSTRACT_STEPS.get(_type)(_id)
+        from pipeline.api import theoretical_steps
 
-    def get_concrete_id(self, _id):
+        config = self.load()
+        _type = config.get("theoreticals.id.{}.type".format(_id))
+        return theoretical_steps.ABSTRACT_STEPS.get(_type)(_id)
+
+    def get_concrete_step_id(self, _id):
         """Get a concrete step id.
 
         Arguments:
@@ -50,7 +43,9 @@ class Config(dictionaries.OrderedDictionary):
         Returns:
             ConcreteStep: The step as an ConcreteStep.
         """
+        from pipeline.api import concrete_steps
+
         config = self.load()
-        abstract_id = config.get("concrete.id.{}.abstract_id".format(_id))
-        _type = config.get("abstract.id.{}.type".format(abstract_id))
-        return self.api.CONCRETE_STEPS.get(_type)(_id)
+        theoretical_id = config.get("concretes.id.{}.theoretical_id".format(_id))
+        _type = config.get("theoreticals.id.{}.type".format(theoretical_id))
+        return concrete_steps.CONCRETE_STEPS.get(_type)(_id)

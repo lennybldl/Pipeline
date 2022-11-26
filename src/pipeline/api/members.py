@@ -1,4 +1,4 @@
-"""Manage the classes that control every element of the pipeline."""
+"""Manage the classes that control every member of the pipeline."""
 
 from python_core.types import dictionaries
 
@@ -7,8 +7,8 @@ from pipeline.internal import database
 DATABASE = database.Database()
 
 
-class Element(int):
-    """Manage every element of the pipeline."""
+class Member(int):
+    """Manage every member of the pipeline."""
 
     config_path = None  # str : The path to the config
 
@@ -26,7 +26,7 @@ class Element(int):
         except AttributeError:
             return DATABASE.config.get("{}.{}.{}".format(self.config_path, self, name))
 
-    # Methods
+    # methods
 
     def get_rules(self):
         """Get the rules that can be performed on the step.
@@ -40,45 +40,27 @@ class Element(int):
         for rule_name, values in self.rules.items():
             # get the rules from an other step rules
             if rule_name == "_same_as_":
-                for element in values:
-                    if isinstance(element, str):
-                        element = config.get_concept_id(element.replace("c", ""))
+                for member in values:
+                    if isinstance(member, str):
+                        member = config.get_concept_id(member.replace("c", ""))
                     else:
-                        element = config.get_abstract_id(element)
-                    rules.update(element.get_rules())
+                        member = config.get_theoretical_step_id(member)
+                    rules.update(member.get_rules())
             # get the rules of the current step
             else:
                 rules[rule_name] = values
         return rules
 
+    def get_properties(self):
+        """Get all the properties saved in the config.
 
-class Concept(Element):
-    """Manage every concept of the pipeline."""
-
-    config_path = "concept.id"
-
-    def add(self, name, **kwargs):
-        """Add this specific concept to the config.
-
-        Arguments:
-            name (str): The name to give to the concept.
+        Returns:
+            dict: All the properties.
         """
-        config = DATABASE.config
-
-        # set default values for the concept
-        properties = dictionaries.OrderedDictionary()
-        properties["name"] = name
-        properties["rules"] = kwargs.get("rules", {"_same_as_": list()})
-
-        # write the new config
-        config.set("{}.{}".format(self.config_path, self), properties)
-        config.dump()
-
-        # log the creation
-        DATABASE.logger.debug("Add concept. ID : '{}'".format(self))
+        return DATABASE.config.get("{}.{}".format(self.config_path, self))
 
 
-class Step(Element):
+class Step(Member):
     """Manage every step of the pipeline."""
 
     def add(self, **properties):

@@ -4,10 +4,10 @@ import sys
 
 from pipeline.internal import database
 
-DATABASE = database.Database(software="windows", py_version=3)
+DATABASE = database.Database()
 
 # Use different modules to import modules considering the python version
-if DATABASE.py_version == 2:
+if DATABASE.python_version[0] == 2:
     import imp
 else:
     import importlib.util
@@ -23,7 +23,7 @@ def call_python_command(command, _id):
     command = DATABASE.rules_path.get_file(command)
 
     # import the module
-    if DATABASE.py_version == 2:
+    if DATABASE.python_version[0] == 2:
         module = imp.load_source(command.name, command.path)
     else:
         spec = importlib.util.spec_from_file_location(
