@@ -28,11 +28,11 @@ class DesignMembersPanel(abstract_panel.AbstractPanel):
         self.concepts_list = list_widget.ConceptsListWidget()
         widget.layout.add_widget(self.concepts_list)
 
-        # add the theoretical steps tree
+        # add the abstract steps tree
         widget = splitter.add_widget(margins=(0, 6, 0, 0))
-        widget.layout.add_label("THEORETICAL MEMBERS", **font_kwargs)
-        self.theoretical_steps_tree = tree_widget.TheoreticalStepsTreeWidget()
-        widget.layout.add_widget(self.theoretical_steps_tree)
+        widget.layout.add_label("ABSTRACT MEMBERS", **font_kwargs)
+        self.abstract_steps_tree = tree_widget.AbstractStepsTreeWidget()
+        widget.layout.add_widget(self.abstract_steps_tree)
 
         # set the splitter
         splitter.setSizes((100, 300))
@@ -44,4 +44,4 @@ class DesignMembersPanel(abstract_panel.AbstractPanel):
         super(DesignMembersPanel, self).sync(*args, **kwargs)
 
         self.concepts_list.sync()
-        self.theoretical_steps_tree.sync()
+        self.abstract_steps_tree.sync()

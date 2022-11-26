@@ -30,11 +30,11 @@ class ConcreteStep(members.Step):
         # log the creation
         DATABASE.logger.debug("Add concrete step. ID : '{}'".format(self))
 
-    def set_properties(self, theoretical_id, parent, **kwargs):
+    def set_properties(self, abstract_id, parent, **kwargs):
         """Write an ordered dictionary of available properties for this step.
 
         Arguments:
-            theoretical_id (str): The id of the theoretical step this step belongs to.
+            abstract_id (str): The id of the abstract step this step belongs to.
             parent (int): The id of the parent of this step.
 
         Returns:
@@ -42,7 +42,7 @@ class ConcreteStep(members.Step):
         """
         # set the properties
         properties = dictionaries.OrderedDictionary()
-        properties["theoretical_id"] = theoretical_id
+        properties["abstract_id"] = abstract_id
         properties["parent"] = parent
         properties["basename"] = kwargs.get("basename", "")
         properties["index"] = kwargs.get("index")
@@ -51,19 +51,19 @@ class ConcreteStep(members.Step):
         return properties
 
     def get_data(self):
-        """Get the concrete and theoretical data of the step.
+        """Get the concrete and abstract data of the step.
 
         Returns:
-            tuple: The concrete data and the theoretical data.
+            tuple: The concrete data and the abstract data.
         """
         config = DATABASE.config
 
-        # get the concrete and theoretical data of the step
+        # get the concrete and abstract data of the step
         concrete_data = config.get("{}.{}".format(self.config_path, self))
-        theoretical_id = concrete_data.get("theoretical_id")
-        theoretical_data = config.get("theoreticals.id.{}".format(theoretical_id))
+        abstract_id = concrete_data.get("abstract_id")
+        abstract_data = config.get("abstracts.id.{}".format(abstract_id))
 
-        return concrete_data, theoretical_data
+        return concrete_data, abstract_data
 
     def get_path(self, relative=False):
         """Get the path of the step.
@@ -112,12 +112,12 @@ class ConcreteStep(members.Step):
 
         # get useful datas
         config = DATABASE.config
-        concrete_data, theoretical_data = self.get_data()
-        name = theoretical_data.get("name")
+        concrete_data, abstract_data = self.get_data()
+        name = abstract_data.get("name")
 
         # process index
-        padding = theoretical_data.get(
-            "index_padding", config.get("theoreticals.index_padding")
+        padding = abstract_data.get(
+            "index_padding", config.get("abstracts.index_padding")
         )
         index = str(concrete_data.get("index")).zfill(padding)
 
@@ -147,10 +147,10 @@ class ConcreteStep(members.Step):
                     asset_name = None
                     break
                 # get the parent asset
-                parent_concrete_data, parent_theoretical_data = commands.get_step_data(
+                parent_concrete_data, parent_abstract_data = commands.get_step_data(
                     parent_id
                 )
-                if parent_theoretical_data.get("type") == "asset":
+                if parent_abstract_data.get("type") == "asset":
                     asset_name = commands.get_step_name(parent_id)
                     break
                 parent_id = parent_concrete_data.get("parent")
@@ -169,22 +169,20 @@ class ConcreteStep(members.Step):
 
         # replace the variables in the path with the matching values
         # and get rid of double underscores
-        name = strings.replace(
-            theoretical_data.get("name"), match.keys(), match.values()
-        )
+        name = strings.replace(abstract_data.get("name"), match.keys(), match.values())
         while "__" in name:
             name = name.replace("__", "_")
         return name
 
     def get_rules(self):
-        """Override the get_rules methods to get the rules from the theoretical id.
+        """Override the get_rules methods to get the rules from the abstract id.
 
         Returns:
             dict: A dictionary of rules.
         """
         config = DATABASE.config
-        theoretical_id = config.get_theoretical_step_id(self.theoretical_id)
-        return theoretical_id.get_rules()
+        abstract_id = config.get_abstract_step_id(self.abstract_id)
+        return abstract_id.get_rules()
 
 
 class ConcreteAsset(ConcreteStep):

@@ -1,4 +1,4 @@
-"""Manage the theoretical steps."""
+"""Manage the abstract steps."""
 
 import os
 
@@ -10,19 +10,19 @@ from pipeline.internal import database
 DATABASE = database.Database()
 
 
-class TheoreticalStep(members.Step):
-    """Manage every theoretical step of the pipeline."""
+class AbstractStep(members.Step):
+    """Manage every abstract step of the pipeline."""
 
     _type = None
-    config_path = "theoreticals.id"
+    config_path = "abstracts.id"
 
     def add(self, **properties):
-        """Add a theoretical step to the config."""
+        """Add a abstract step to the config."""
 
-        super(TheoreticalStep, self).add(**properties)
+        super(AbstractStep, self).add(**properties)
 
         # log the creation
-        DATABASE.logger.debug("Add theoretical step. ID : '{}'".format(self))
+        DATABASE.logger.debug("Add abstract step. ID : '{}'".format(self))
 
     def set_properties(self, parent, **kwargs):
         """Write an ordered dictionary of available properties for this step.
@@ -44,32 +44,30 @@ class TheoreticalStep(members.Step):
         )
         properties["parent"] = parent
         properties["concept"] = concept
-        # add the rules for the theoretical step
+        # add the rules for the abstract step
         properties["rules"] = kwargs.get(
             "rules", {"_same_as_": ["c{}".format(concept)]}
         )
 
         return properties
 
-    def get_theoretical_path(self, relative=True):
-        """Get the theoretical path of the theoretical step.
+    def get_abstract_path(self, relative=True):
+        """Get the abstract path of the abstract step.
 
         Keyword Arguments:
             relative (bool, optional): To get the path relative to the project's path.
                 Default to True.
 
         Returns:
-            str: The unformated procedural path of the theoretical step.
+            str: The unformated procedural path of the abstract step.
         """
         config = DATABASE.config
 
         step_path = [DATABASE.path]
         parent_id = self
         while True:
-            step_path.insert(
-                -1, config.get("theoreticals.id.{}.name".format(parent_id))
-            )
-            parent_id = config.get("theoreticals.id.{}.parent".format(parent_id))
+            step_path.insert(-1, config.get("abstracts.id.{}.name".format(parent_id)))
+            parent_id = config.get("abstracts.id.{}.parent".format(parent_id))
             if parent_id == 0:
                 break
 
@@ -80,14 +78,14 @@ class TheoreticalStep(members.Step):
         return os.path.join(*reversed(step_path))
 
 
-class TheoreticalAsset(TheoreticalStep):
-    """Manage every theoretical asset of the pipeline."""
+class AbstractAsset(AbstractStep):
+    """Manage every abstract asset of the pipeline."""
 
     _type = "asset"
 
 
-class TheoreticalTask(TheoreticalStep):
-    """Manage every theoretical task of the pipeline."""
+class AbstractTask(AbstractStep):
+    """Manage every abstract task of the pipeline."""
 
     _type = "task"
 
@@ -98,20 +96,20 @@ class TheoreticalTask(TheoreticalStep):
             OrderedDictionary: The ordered dictionary.
         """
         # set the properties
-        properties = super(TheoreticalTask, self).set_properties(**kwargs)
+        properties = super(AbstractTask, self).set_properties(**kwargs)
         properties["task"] = kwargs.get("task", "task{}".format(self))
         properties.move_to_end("rules")
         return properties
 
 
-class TheoreticalWorkfile(TheoreticalStep):
-    """Manage every theoretical workfile of the pipeline."""
+class AbstractWorkfile(AbstractStep):
+    """Manage every abstract workfile of the pipeline."""
 
     _type = "workfile"
 
 
 ABSTRACT_STEPS = {
-    "asset": TheoreticalAsset,
-    "task": TheoreticalTask,
-    "workfile": TheoreticalWorkfile,
+    "asset": AbstractAsset,
+    "task": AbstractTask,
+    "workfile": AbstractWorkfile,
 }

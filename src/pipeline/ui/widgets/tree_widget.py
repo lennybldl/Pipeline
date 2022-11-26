@@ -27,15 +27,15 @@ class AbstractTreeWidget(tree_widget.TreeWidget):
         """Synchonize the tree widget with the project config."""
 
 
-class TheoreticalStepsTreeWidget(AbstractTreeWidget):
-    """Manage the theoretical steps tree widget."""
+class AbstractStepsTreeWidget(AbstractTreeWidget):
+    """Manage the abstract steps tree widget."""
 
     item_class = tree_widget_item.AbstractMemberTreeWidgetItem
 
     def __init__(self, *args, **kwargs):
         """Initialize the widget."""
 
-        super(TheoreticalStepsTreeWidget, self).__init__(*args, **kwargs)
+        super(AbstractStepsTreeWidget, self).__init__(*args, **kwargs)
 
         self.setHeaderHidden(True)
         self.set_drag_drop(True)
@@ -47,7 +47,7 @@ class TheoreticalStepsTreeWidget(AbstractTreeWidget):
     def sync(self):
         """Synchonize the tree widget with the project config."""
 
-        super(TheoreticalStepsTreeWidget, self).sync()
+        super(AbstractStepsTreeWidget, self).sync()
 
         self.clear()
 
@@ -56,14 +56,14 @@ class TheoreticalStepsTreeWidget(AbstractTreeWidget):
         if not config:
             return
 
-        # add the theoretical items
+        # add the abstract items
         created_items = dict()
-        for _id in config.get("theoreticals.id").keys():
-            _id = config.get_theoretical_step_id(_id)
+        for _id in config.get("abstracts.id").keys():
+            _id = config.get_abstract_step_id(_id)
 
             # create the actual item
             item = self.add_item(_id.name, parent=created_items.get(_id.parent, None))
-            item._id = config.get_theoretical_step_id(_id)
+            item._id = config.get_abstract_step_id(_id)
 
             # add the created item to the dictionary of created items
             created_items.update({_id: item})

@@ -19,20 +19,20 @@ class Config(dictionaries.OrderedDictionary):
 
         return concepts.Concept(_id)
 
-    def get_theoretical_step_id(self, _id):
-        """Get a theoretical step id.
+    def get_abstract_step_id(self, _id):
+        """Get a abstract step id.
 
         Arguments:
-            _id (int): The id of the theoretical step.
+            _id (int): The id of the abstract step.
 
         Returns:
-            TheoreticalStep: The step as an TheoreticalStep.
+            AbstractStep: The step as an AbstractStep.
         """
-        from pipeline.api import theoretical_steps
+        from pipeline.api import abstract_steps
 
         config = self.load()
-        _type = config.get("theoreticals.id.{}.type".format(_id))
-        return theoretical_steps.ABSTRACT_STEPS.get(_type)(_id)
+        _type = config.get("abstracts.id.{}.type".format(_id))
+        return abstract_steps.ABSTRACT_STEPS.get(_type)(_id)
 
     def get_concrete_step_id(self, _id):
         """Get a concrete step id.
@@ -46,6 +46,6 @@ class Config(dictionaries.OrderedDictionary):
         from pipeline.api import concrete_steps
 
         config = self.load()
-        theoretical_id = config.get("concretes.id.{}.theoretical_id".format(_id))
-        _type = config.get("theoreticals.id.{}.type".format(theoretical_id))
+        abstract_id = config.get("concretes.id.{}.abstract_id".format(_id))
+        _type = config.get("abstracts.id.{}.type".format(abstract_id))
         return concrete_steps.CONCRETE_STEPS.get(_type)(_id)

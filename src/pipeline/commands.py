@@ -2,7 +2,7 @@
 
 from python_core.types import items
 
-from pipeline.api import concrete_steps, members, theoretical_steps
+from pipeline.api import concrete_steps, members, abstract_steps
 from pipeline.internal import command_calls, database
 
 DATABASE = None
@@ -70,36 +70,36 @@ def add_concept(name, **properties):
     return _id
 
 
-def add_theoretical_step(_type, parent, **properties):
-    """Add a theoretical step to the config.
+def add_abstract_step(_type, parent, **properties):
+    """Add a abstract step to the config.
 
     Arguments:
         _type (str): The type of step it is. (asset, task, workfile).
         parent (int): The id of the parent of this step.
 
     Returns:
-        TheoreticalStep: The id of the added theoretical step.
+        AbstractStep: The id of the added abstract step.
     """
-    _id = get_available_theoretical_id()
-    _id = theoretical_steps.ABSTRACT_STEPS.get(_type)(_id)
+    _id = get_available_abstract_id()
+    _id = abstract_steps.ABSTRACT_STEPS.get(_type)(_id)
     _id.add(parent=parent, **properties)
     return _id
 
 
-def add_concrete_step(theoretical_id, parent, **properties):
+def add_concrete_step(abstract_id, parent, **properties):
     """Add a concrete step to the config.
 
     Arguments:
-        theoretical_id (str): The id of the theoretical step this step belongs to.
+        abstract_id (str): The id of the abstract step this step belongs to.
         parent (int): The id of the parent of this step.
 
     Returns:
         int: The id of the added concrete step.
     """
     _id = get_available_concrete_id()
-    theoretical_id = DATABASE.config.get_theoretical_step_id(theoretical_id)
-    _id = concrete_steps.CONCRETE_STEPS.get(theoretical_id.type)(_id)
-    _id.add(theoretical_id=theoretical_id, parent=parent, **properties)
+    abstract_id = DATABASE.config.get_abstract_step_id(abstract_id)
+    _id = concrete_steps.CONCRETE_STEPS.get(abstract_id.type)(_id)
+    _id.add(abstract_id=abstract_id, parent=parent, **properties)
     return _id
 
 
@@ -135,19 +135,19 @@ def get_available_concept_id():
     return list(potential_ids - set(existing_ids))[0]
 
 
-def get_available_theoretical_id():
-    """Get the next available theoretical id.
+def get_available_abstract_id():
+    """Get the next available abstract id.
 
     Returns:
         int: The available id.
     """
-    existing_ids = list(map(int, DATABASE.config.get("theoreticals.id").keys()))
+    existing_ids = list(map(int, DATABASE.config.get("abstracts.id").keys()))
     potential_ids = set(range(1, len(existing_ids) + 2))
     return list(potential_ids - set(existing_ids))[0]
 
 
 def get_available_concrete_id():
-    """Get the next available theoretical id.
+    """Get the next available abstract id.
 
     Returns:
         int: The available id.
@@ -172,16 +172,16 @@ def get_concept_id(_id):
     return DATABASE.config.get_concept_id(_id)
 
 
-def get_theoretical_step_id(_id):
-    """Get an existing theoretical step id.
+def get_abstract_step_id(_id):
+    """Get an existing abstract step id.
 
     Arguments:
-        _id (int): The theoretical step's id.
+        _id (int): The abstract step's id.
 
     Returns:
-        TheoreticalStep: The theoretical step.
+        AbstractStep: The abstract step.
     """
-    return DATABASE.config.get_theoretical_step_id(_id)
+    return DATABASE.config.get_abstract_step_id(_id)
 
 
 def get_concrete_step_id(_id):
@@ -200,13 +200,13 @@ def get_concrete_step_id(_id):
 
 
 def get_step_data(_id):
-    """Get the concrete and theoretical data of a concrete step.
+    """Get the concrete and abstract data of a concrete step.
 
     Arguments:
         _id (int): The id of the concrete step.
 
     Returns:
-        tuple: The concrete data and the theoretical data.
+        tuple: The concrete data and the abstract data.
     """
     _id = get_concrete_step_id(_id)
     return _id.get_data()
@@ -229,21 +229,21 @@ def get_step_path(_id, relative=False):
     return _id.get_path(relative)
 
 
-def get_theoretical_step_path(_id, relative=True):
-    """Get the theoretical path of a theoretical step.
+def get_abstract_step_path(_id, relative=True):
+    """Get the abstract path of a abstract step.
 
     Arguments:
-        _id (int): The theoretical step id to get the theoretical path from.
+        _id (int): The abstract step id to get the abstract path from.
 
     Keyword Arguments:
         relative (bool, optional): To get the path relative to the project's path.
             Default to True.
 
     Returns:
-        str: The unformated procedural path of the theoretical step.
+        str: The unformated procedural path of the abstract step.
     """
-    _id = get_theoretical_step_id(_id)
-    return _id.get_theoretical_path(relative=relative)
+    _id = get_abstract_step_id(_id)
+    return _id.get_abstract_path(relative=relative)
 
 
 def get_step_name(_id):
@@ -260,11 +260,11 @@ def get_step_name(_id):
 
 
 def get_rules(step):
-    """Get the rules that can be performed on a theoretical step id or a concept id.
+    """Get the rules that can be performed on a abstract step id or a concept id.
 
     Arguments:
         step (str, int): The id to get the rules from.
-            If it's an integer, the theoretical step id.
+            If it's an integer, the abstract step id.
             If it's a string, the concept id written "cId".
 
     Returns:
@@ -274,34 +274,34 @@ def get_rules(step):
     if isinstance(step, str):
         member = config.get_concept_id(step.replace("c", ""))
     else:
-        member = config.get_theoretical_step_id(step)
+        member = config.get_abstract_step_id(step)
     return member.get_rules()
 
 
 def get_root_concept(_id):  # TODO : USELESS?
-    """Get the root concept of a theoretical step.
+    """Get the root concept of a abstract step.
 
     Arguments:
-        _id (int): The id of the theoretical step.
+        _id (int): The id of the abstract step.
 
     Returns:
         int: The id of the root concept.
     """
 
     def recursively_find_root_concept(_id):
-        """Get if the theoretical id's concept is in the root concept.
+        """Get if the abstract id's concept is in the root concept.
 
         If not, try it's parent.
 
         Arguments:
-            _id (int): The id of the theoretical step.
+            _id (int): The id of the abstract step.
 
         Returns:
             int: The id of the root concept.
         """
-        if config.get("theoreticals.id.{}.concept".format(_id)) in root_concepts:
+        if config.get("abstracts.id.{}.concept".format(_id)) in root_concepts:
             _id = recursively_find_root_concept(
-                config.get("theoreticals.id.{}.parent".format(_id))
+                config.get("abstracts.id.{}.parent".format(_id))
             )
         return _id
 

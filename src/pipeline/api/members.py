@@ -44,7 +44,7 @@ class Member(int):
                     if isinstance(member, str):
                         member = config.get_concept_id(member.replace("c", ""))
                     else:
-                        member = config.get_theoretical_step_id(member)
+                        member = config.get_abstract_step_id(member)
                     rules.update(member.get_rules())
             # get the rules of the current step
             else:

@@ -10,5 +10,5 @@ class AbstractMemberTreeWidgetItem(tree_widget_item.TreeWidgetItem):
     _id = None  # Member: The id of the member
 
 
-class TheoreticalTreeWidgetItem(AbstractMemberTreeWidgetItem):
-    """Manage the methods for a theoretical tree widget item."""
+class AbstractTreeWidgetItem(AbstractMemberTreeWidgetItem):
+    """Manage the methods for a abstract tree widget item."""
