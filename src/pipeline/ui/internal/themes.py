@@ -3,9 +3,9 @@
 from python_core.pyside2.internal import style_sheets
 from python_core.types import dictionaries, strings
 
-from pipeline.internal import database
+from pipeline.internal import manager
 
-THEMES = database.THEMES
+THEMES = manager.THEMES
 
 
 class Theme(dictionaries.Dictionary):

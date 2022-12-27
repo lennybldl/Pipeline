@@ -3,11 +3,11 @@
 from python_core.types import strings
 from python_core.pyside2.widgets import list_widget
 
-from pipeline.internal import database
+from pipeline.internal import manager
 from pipeline.ui.internal import synchronizer
 from pipeline.ui.widgets import list_widget_item
 
-DATABASE = database.Database()
+DATABASE = manager.Database()
 
 
 class AbstractListWidget(list_widget.ListWidget):
@@ -24,7 +24,7 @@ class AbstractListWidget(list_widget.ListWidget):
         setattr(self.synchronizer, strings.lower_case(self.__class__.__name__), self)
 
     def sync(self, *args, **kwargs):
-        """Synchonize the list widget with the project config."""
+        """Synchonize the list widget with the project project."""
 
 
 class ConceptsListWidget(AbstractListWidget):
@@ -42,21 +42,21 @@ class ConceptsListWidget(AbstractListWidget):
     # methods
 
     def sync(self, *args, **kwargs):
-        """Synchonize the list widget with the project config."""
+        """Synchonize the list widget with the project project."""
 
         super(ConceptsListWidget, self).sync()
 
         self.clear()
 
-        # populate with the config
-        config = DATABASE.config
-        if not config:
+        # populate with the project
+        project = DATABASE.project
+        if not project:
             return
 
         # add the concept items
-        static_ids = database.STATIC_CONCEPTS.values()
-        for _id in config.get("concepts.id").keys():
-            _id = config.get_concept_id(_id)
+        static_ids = manager.STATIC_CONCEPTS.values()
+        for _id in project.get("concept.id").keys():
+            _id = project.get_concept_id(_id)
 
             # set the type of list widget item to create
             if _id in static_ids:

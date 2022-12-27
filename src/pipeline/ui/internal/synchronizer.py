@@ -18,8 +18,13 @@ class Synchronizer(object):
             cls._instance = super(Synchronizer, cls).__new__(cls)
         return cls._instance
 
+    # methods
+
     def sync_design_trees_selection(self, _id):
         """Synchronize the rest of the UI with the current design member selection."""
 
         if self.design_members_properties_panel:
             self.design_members_properties_panel.sync(_id)
+
+    def sync_concrete_tree_selection(self, _id):
+        """Synchronize the rest of the UI with the current concrete member selection."""

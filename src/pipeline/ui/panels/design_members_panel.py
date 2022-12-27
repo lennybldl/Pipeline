@@ -14,6 +14,7 @@ class DesignMembersPanel(abstract_panel.AbstractPanel):
 
         # save the lables font kwargs in a variable
         font_kwargs = {
+            "name": "header_1",
             "bold": True,
             "font_size": 12,
             "alignment": "center",

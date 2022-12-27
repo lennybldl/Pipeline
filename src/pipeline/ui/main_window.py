@@ -8,12 +8,12 @@ from python_core.pyside2 import base_ui
 
 import pipeline
 from pipeline import commands
-from pipeline.internal import database
+from pipeline.internal import manager
 from pipeline.ui.internal import themes
-from pipeline.ui.tabs import design_tab
+from pipeline.ui.tabs import design_tab, project_tab
 
 
-IMAGES = database.IMAGES
+IMAGES = manager.IMAGES
 
 
 class AbstractMainWindow(base_ui.MainWindow):
@@ -39,7 +39,7 @@ class AbstractMainWindow(base_ui.MainWindow):
         # add a file menu
         file_menu = menu_bar.add_menu("File")
         file_menu.add_action(
-            "New pipeline", triggered=self.create_pipeline, shortcut="CTRL+N"
+            "New pipeline", triggered=self.create_project, shortcut="CTRL+N"
         )
         file_menu.add_action(
             "Open pipeline", triggered=self.open_pipeline, shortcut="CTRL+O"
@@ -47,7 +47,7 @@ class AbstractMainWindow(base_ui.MainWindow):
         # add an edit menu
         edit_menu = menu_bar.add_menu("Edit")
         themes_menu = edit_menu.add_menu("Themes")
-        for theme in database.THEMES.folders():
+        for theme in manager.THEMES.folders():
             theme = theme.name
             themes_menu.add_action(
                 theme, triggered=functools.partial(self.set_theme, theme)
@@ -55,14 +55,15 @@ class AbstractMainWindow(base_ui.MainWindow):
 
         # create the widgets to store in the tabs
         design_tab_widget = design_tab.DesignTab()
+        project_tab_widget = project_tab.ProjectTab()
 
         # create the tab widget
         tab_widget = self.layout.add_tab_widget()
         tab_widget.add_tab("Design", widget=design_tab_widget)
-        tab_widget.add_tab("Project")
+        tab_widget.add_tab("Project", widget=project_tab_widget)
 
         # keep the tabs in memory
-        self.tabs = [design_tab_widget]
+        self.tabs = [design_tab_widget, project_tab_widget]
 
     # methods
 
@@ -75,7 +76,7 @@ class AbstractMainWindow(base_ui.MainWindow):
     def import_fonts(self):
         """Import the accessable fonts for the application."""
 
-        for font in database.FONTS.files():
+        for font in manager.FONTS.files():
             QFontDatabase.addApplicationFont(font)
 
     def get_theme(self):
@@ -106,7 +107,7 @@ class AbstractMainWindow(base_ui.MainWindow):
 
     # signals
 
-    def create_pipeline(self):
+    def create_project(self):
         """Create a new pipeline."""
 
         # browse to a path to create the pipeline in
@@ -115,7 +116,7 @@ class AbstractMainWindow(base_ui.MainWindow):
 
         # create the pipeline
         if paths:
-            commands.create_pipeline(paths[0])
+            commands.create_project(paths[0])
             self.sync()
 
     def open_pipeline(self):

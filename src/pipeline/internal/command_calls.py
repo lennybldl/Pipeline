@@ -2,12 +2,12 @@
 
 import sys
 
-from pipeline.internal import database
+from pipeline.internal import manager
 
-DATABASE = database.Database()
+MANAGER = manager.Manager()
 
 # Use different modules to import modules considering the python version
-if DATABASE.python_version[0] == 2:
+if MANAGER.python_version[0] == 2:
     import imp
 else:
     import importlib.util
@@ -20,10 +20,10 @@ def call_python_command(command, _id):
         command (str): The path to the command, relative to the rules path.
         _id (int): The id of the concrete step.
     """
-    command = DATABASE.rules_path.get_file(command)
+    command = MANAGER.rules_path.get_file(command)
 
     # import the module
-    if DATABASE.python_version[0] == 2:
+    if MANAGER.python_version[0] == 2:
         module = imp.load_source(command.name, command.path)
     else:
         spec = importlib.util.spec_from_file_location(
@@ -38,10 +38,10 @@ def call_python_command(command, _id):
         try:
             module.execute(_id)
         except:  # noqa E722
-            DATABASE.logger.exception(
+            MANAGER.logger.exception(
                 "An error occured while executing '{}'".format(command)
             )
     else:
-        DATABASE.logger.warning(
+        MANAGER.logger.warning(
             "Could not find an 'execute' function in '{}'".format(command)
         )

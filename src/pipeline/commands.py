@@ -1,11 +1,8 @@
 """Manage the package common commands."""
 
-from python_core.types import items
+from pipeline.internal import command_calls, manager
 
-from pipeline.api import concrete_steps, members, abstract_steps
-from pipeline.internal import command_calls, database
-
-DATABASE = None
+MANAGER = None
 
 
 def start(software):
@@ -14,93 +11,166 @@ def start(software):
     Arguments:
         software (str): The software we're executing the pipeline in.
     """
-    global DATABASE
-    DATABASE = database.Database(software=software)
+    global MANAGER
+    MANAGER = manager.Manager(software=software)
 
 
 # edit project
 
 
-def initialize(path):
-    """Initialize the pipeline on a specific path.
+def load_project(path):
+    """Load a project from a specific path.
 
     Arguments:
         path (str): The path to the project.
     """
-    # create the .pipeline folder if it doesn't exist
-    path = items.Folder(path)
-    if not path.get_folder(".pipeline").exists():
-        create_pipeline(path)
-
-    # initialize the database
-    DATABASE.path = path
-    DATABASE.logger.add_file_handler(DATABASE.log_path, mode="w")
+    MANAGER.load_project(path)
 
 
-def create_pipeline(path):
-    """Create the pipeline folder and initialize.
+def create_project(path):
+    """Create the project folder and initialize.
 
     Arguments:
         path (str): The path to create the pipeline to.
     """
-    # create the project folder
-    project_path = items.Folder(path)
-    project_path.create()
-
-    # create the pipeline folder for the project
-    pipeline_path = database.RESOURCES.get_folder(".pipeline")
-    pipeline_path.copy(to=project_path.get_folder(".pipeline"))
-
-    # initialize the database
-    initialize(path)
+    MANAGER.create_project(path)
 
 
-def add_concept(name, **properties):
-    """Add a concept to the config.
+def save():
+    """Save the current project pipeline."""
+    MANAGER.project.save()
 
-    Arguments:
-        name (str): The name to give to the concept.
+
+# add members
+
+
+def add_concept(*args, **kwargs):
+    """Add a concept to the project.
 
     Returns:
         Concept: The id of the added concept.
     """
-    _id = get_available_concept_id()
-    _id = members.Concept(_id)
-    _id.add(name, **properties)
-    return _id
+    return MANAGER.project.add_concept(*args, **kwargs)
 
 
-def add_abstract_step(_type, parent, **properties):
-    """Add a abstract step to the config.
-
-    Arguments:
-        _type (str): The type of step it is. (asset, task, workfile).
-        parent (int): The id of the parent of this step.
+def add_abstract_step(*args, **kwargs):
+    """Add a abstract step to the project.
 
     Returns:
         AbstractStep: The id of the added abstract step.
     """
-    _id = get_available_abstract_id()
-    _id = abstract_steps.ABSTRACT_STEPS.get(_type)(_id)
-    _id.add(parent=parent, **properties)
-    return _id
+    return MANAGER.project.add_abstract_step(*args, **kwargs)
 
 
-def add_concrete_step(abstract_id, parent, **properties):
-    """Add a concrete step to the config.
+def add_concrete_step(abstract_id, *args, **kwargs):
+    """Add a concrete step to the project.
 
     Arguments:
         abstract_id (str): The id of the abstract step this step belongs to.
-        parent (int): The id of the parent of this step.
 
     Returns:
         int: The id of the added concrete step.
     """
-    _id = get_available_concrete_id()
-    abstract_id = DATABASE.config.get_abstract_step_id(abstract_id)
-    _id = concrete_steps.CONCRETE_STEPS.get(abstract_id.type)(_id)
-    _id.add(abstract_id=abstract_id, parent=parent, **properties)
-    return _id
+    return MANAGER.project.add_concrete_step(abstract_id, *args, **kwargs)
+
+
+# get existing members
+
+
+def get_concept(_id):
+    """Get an existing concept from its id.
+
+    Arguments:
+        _id (int): The concept's id.
+
+    Returns:
+        Concept: The concept.
+    """
+    return MANAGER.project.get_concept(_id)
+
+
+def get_abstract_step(_id):
+    """Get an existing abstract step from its id.
+
+    Arguments:
+        _id (int): The abstract step's id.
+
+    Returns:
+        AbstractStep: The abstract step.
+    """
+    return MANAGER.project.get_abstract_step(_id)
+
+
+def get_concrete_step(_id):
+    """Get an existing concrete step from its id.
+
+    Arguments:
+        _id (int): The concrete step's id.
+
+    Returns:
+        ConcreteStep: The concrete step.
+    """
+    return MANAGER.project.get_concrete_step(_id)
+
+
+def list_concepts():
+    """List all the existing concepts.
+
+    Returns:
+        list: A list of concept members.
+    """
+    return MANAGER.project.list_concepts()
+
+
+def list_abstract_steps(self):
+    """List all the existing abstract_steps.
+
+    Returns:
+        list: A list of abstract_step members.
+    """
+    return MANAGER.project.list_abstract_steps()
+
+
+def list_concrete_steps(self):
+    """List all the existing concrete_steps.
+
+    Returns:
+        list: A list of concrete_step members.
+    """
+    return MANAGER.project.list_concrete_steps()
+
+
+# get available ids
+
+
+def get_available_concept_id():
+    """Get the next available concept id.
+
+    Returns:
+        int: The available id.
+    """
+    return MANAGER.project.get_available_concept_id()
+
+
+def get_available_abstract_id():
+    """Get the next available abstract id.
+
+    Returns:
+        int: The available id.
+    """
+    return MANAGER.project.get_available_abstract_id()
+
+
+def get_available_concrete_id():
+    """Get the next available abstract id.
+
+    Returns:
+        int: The available id.
+    """
+    return MANAGER.project.get_available_concrete_id()
+
+
+# manipulate members
 
 
 def call(name, _id):
@@ -121,82 +191,7 @@ def call(name, _id):
             command_calls.call_python_command(command, _id)
 
 
-# get available ids
-
-
-def get_available_concept_id():
-    """Get the next available concept id.
-
-    Returns:
-        int: The available id.
-    """
-    existing_ids = list(map(int, DATABASE.config.get("concept.id").keys()))
-    potential_ids = set(range(1, len(existing_ids) + 2))
-    return list(potential_ids - set(existing_ids))[0]
-
-
-def get_available_abstract_id():
-    """Get the next available abstract id.
-
-    Returns:
-        int: The available id.
-    """
-    existing_ids = list(map(int, DATABASE.config.get("abstracts.id").keys()))
-    potential_ids = set(range(1, len(existing_ids) + 2))
-    return list(potential_ids - set(existing_ids))[0]
-
-
-def get_available_concrete_id():
-    """Get the next available abstract id.
-
-    Returns:
-        int: The available id.
-    """
-    existing_ids = list(map(int, DATABASE.config.get("concretes.id").keys()))
-    potential_ids = set(range(1, len(existing_ids) + 2))
-    return list(potential_ids - set(existing_ids))[0]
-
-
-# get existing ids
-
-
-def get_concept_id(_id):
-    """Get an existing concept id.
-
-    Arguments:
-        _id (int): The concept's id.
-
-    Returns:
-        Concept: The concept.
-    """
-    return DATABASE.config.get_concept_id(_id)
-
-
-def get_abstract_step_id(_id):
-    """Get an existing abstract step id.
-
-    Arguments:
-        _id (int): The abstract step's id.
-
-    Returns:
-        AbstractStep: The abstract step.
-    """
-    return DATABASE.config.get_abstract_step_id(_id)
-
-
-def get_concrete_step_id(_id):
-    """Get an existing concrete step id.
-
-    Arguments:
-        _id (int): The concrete step's id.
-
-    Returns:
-        ConcreteStep: The concrete step.
-    """
-    return DATABASE.config.get_concrete_step_id(_id)
-
-
-# get step informations
+# get members informations
 
 
 def get_step_data(_id):
@@ -270,11 +265,11 @@ def get_rules(step):
     Returns:
         list: A list of rules names.
     """
-    config = DATABASE.config
+    project = DATABASE.project
     if isinstance(step, str):
-        member = config.get_concept_id(step.replace("c", ""))
+        member = project.get_concept_id(step.replace("c", ""))
     else:
-        member = config.get_abstract_step_id(step)
+        member = project.get_abstract_step_id(step)
     return member.get_rules()
 
 
@@ -299,12 +294,12 @@ def get_root_concept(_id):  # TODO : USELESS?
         Returns:
             int: The id of the root concept.
         """
-        if config.get("abstracts.id.{}.concept".format(_id)) in root_concepts:
+        if project.get("abstract.id.{}.concept".format(_id)) in root_concepts:
             _id = recursively_find_root_concept(
-                config.get("abstracts.id.{}.parent".format(_id))
+                project.get("abstract.id.{}.parent".format(_id))
             )
         return _id
 
-    config = DATABASE.config
+    project = DATABASE.project
     root_concepts = database.ROOT_CONCEPTS
     return recursively_find_root_concept(_id)

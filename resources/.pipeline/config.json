@@ -1,5 +1,5 @@
 {
-    "concepts": {
+    "concept": {
         "id": {
             "0": {
                 "name": "global",
@@ -75,11 +75,11 @@
             }
         }
     },
-    "abstracts": {
+    "abstract": {
         "index_padding": 4,
         "id": {}
     },
-    "concretes": {
+    "concrete": {
         "id": {},
         "path": {}
     }

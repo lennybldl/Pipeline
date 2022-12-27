@@ -2,9 +2,9 @@
 
 from pipeline.ui.panels import abstract_panel
 
-from pipeline.internal import database
+from pipeline.internal import manager
 
-DATABASE = database.Database()
+DATABASE = manager.Database()
 
 # UI variables
 LABELS_WIDTH = 80
@@ -23,9 +23,11 @@ class DesignMembersPropertiesPanel(abstract_panel.AbstractPanel):
         super(DesignMembersPropertiesPanel, self).build_ui(*args, **kwargs)
 
         # set up variables to lighten the code
-        font_kwargs = {"bold": True}
+        font_kwargs = {"name": "header_2", "bold": True, "font_size": 9}
 
-        self.layout.add_label("PROPERTIES", font_size=12, bold=True, alignment="center")
+        self.layout.add_label(
+            "PROPERTIES", name="header_1", font_size=12, bold=True, alignment="center"
+        )
 
         # global properties
         self.layout.add_label("Global properties", **font_kwargs)
@@ -124,7 +126,7 @@ class DesignMembersPropertiesPanel(abstract_panel.AbstractPanel):
         self.id_field.setValue(_id)
 
         # update the concepts choices
-        concepts = DATABASE.config.get("concepts.id")
+        concepts = DATABASE.project.get("concept.id")
         self.concept_field.clear()
         self.concept_field.add_items(
             [concepts.get("{}.name".format(i)) for i in range(len(concepts))]

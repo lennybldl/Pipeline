@@ -1,16 +1,17 @@
 {
     "colors": {
         "PRIMARY_COLOR": "#61C3D4",
-        "PRIMARY_TEXT_COLOR": "#E3E8F1",
-        "PRIMARY_BACKGROUND_COLOR": "#21252b",
-        "SECONDARY_BACKGROUND_COLOR": "#404754",
-        "NEUTRAL_TEXT_COLOR": "#abb2bf",
-        "NEUTRAL_BORDERS_COLORS": "1px solid #191d21",
-        "NEUTRAL_BACKGROUND_COLOR": "#282c34",
         "SELECTED_COLOR": "#323842",
         "HOVERED_COLOR": "#838A97",
         "CLICKED_COLOR": "#abb2bf",
-        "DISABLED_COLOR": "#636b78"
+        "DISABLED_COLOR": "#636b78",
+        "PRIMARY_TEXT_COLOR": "#E3E8F1",
+        "PRIMARY_BACKGROUND_COLOR": "#21252b",
+        "SECONDARY_TEXT_COLOR": "#CED4D8",
+        "SECONDARY_BACKGROUND_COLOR": "#404754",
+        "NEUTRAL_TEXT_COLOR": "#abb2bf",
+        "NEUTRAL_BACKGROUND_COLOR": "#282c34",
+        "NEUTRAL_BORDERS_COLORS": "1px solid #191d21"
     },
     "images": [
         "QTreeView_OpenArrow.svg",
@@ -52,6 +53,26 @@
                 }
             }
         },
+        "QLabel": {
+            "#header_0": {
+                "color": "{PRIMARY_TEXT_COLOR}",
+                ":disabled": {
+                    "color": "{DISABLED_COLOR}"
+                }
+            },
+            "#header_1": {
+                "color": "{SECONDARY_TEXT_COLOR}",
+                ":disabled": {
+                    "color": "{DISABLED_COLOR}"
+                }
+            },
+            "#header_2": {
+                "color": "{NEUTRAL_TEXT_COLOR}",
+                ":disabled": {
+                    "color": "{DISABLED_COLOR}"
+                }
+            }
+        },
         "QTabWidget": {
             "::pane": {
                 "top": "-1px",
@@ -73,6 +94,7 @@
             "show-decoration-selected": 0,
             "background-color": "{PRIMARY_BACKGROUND_COLOR}",
             "::item": {
+                "height": "20px",
                 ":selected": {
                     "selection-background-color": "{SELECTED_COLOR}"
                 }
@@ -100,6 +122,7 @@
         "QListView": {
             "background-color": "{PRIMARY_BACKGROUND_COLOR}",
             "::item": {
+                "height": "20px",
                 ":selected": {
                     "background-color": "{SELECTED_COLOR}"
                 }
