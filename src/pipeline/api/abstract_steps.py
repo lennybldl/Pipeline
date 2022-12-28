@@ -8,12 +8,12 @@ class AbstractStep(members.DesignMember):
 
     project_path = "abstract.id"
 
-    def create(self, **kwargs):
-        """Create the member.
+    def _create_builtin_properties(self):
+        """Create the builtin properties of the member.
 
-        Keyword Arguments:
-            parent (int, optional): The id of the step this step should be parented to.
+        Builtin properties:
+            | parent (int): The id of the step this step should be parented to.
                 If 0, the step will be parented to the root. Default to 0.
         """
-        super(AbstractStep, self).create(**kwargs)
-        self.add_property("int", "parent", kwargs.get("parent", 0))
+        super(AbstractStep, self)._create_builtin_properties()
+        self.add_property("int", "parent", 0)

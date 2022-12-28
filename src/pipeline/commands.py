@@ -62,7 +62,7 @@ def add_abstract_step(*args, **kwargs):
     return MANAGER.project.add_abstract_step(*args, **kwargs)
 
 
-def add_concrete_step(abstract_id, *args, **kwargs):
+def add_concrete_step(*args, **kwargs):
     """Add a concrete step to the project.
 
     Arguments:
@@ -71,7 +71,7 @@ def add_concrete_step(abstract_id, *args, **kwargs):
     Returns:
         int: The id of the added concrete step.
     """
-    return MANAGER.project.add_concrete_step(abstract_id, *args, **kwargs)
+    return MANAGER.project.add_concrete_step(*args, **kwargs)
 
 
 # get existing members

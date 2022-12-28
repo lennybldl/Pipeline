@@ -1,6 +1,6 @@
 """Manage the classes that control every member of the pipeline."""
 
-from python_core.types import dictionaries, signals
+from python_core.types import dictionaries, signals, strings
 
 from pipeline.api import properties
 from pipeline.internal import manager
@@ -15,19 +15,11 @@ class Member(object):
 
     is_initialized = False
 
-    def __init__(self, _id, super_member=None, **kwargs):
+    def __init__(self, _id, super_member=None):
         """Initialize the member.
 
         Keyword Arguments:
             super_member (Member, optional): A member to inherit from. Default to None.
-            name (str, optional): The name to give to the member. It can be hard
-                coded or made up of variables withing braces.
-                (e.g : "TheName", "Abstract_{concept}"). Default to "AbstractStep#".
-            alias (int, optional): The name to give to the member that overrides
-                the name. Default to None.
-            index (int, optional): The id of the member. Default to 0.
-            padding (int, optional): The number of digits in the index. Default to 4.
-            rules (dict, optional): The member's rules. Default to 4.
         """
         # create signals
         self.has_been_edited = signals.Signal()
@@ -42,14 +34,7 @@ class Member(object):
         if str(_id) in self.project.get(self.project_path):
             self.load()
         else:
-            name = kwargs.get("name", self.__class__.__name__ + str(self._id))
-            self.add_property("member", "super_member", super_member)
-            self.add_property("str", "name", name)
-            self.add_property("str", "alias", kwargs.get("alias"))
-            self.add_property("int", "index", kwargs.get("index", 0))
-            self.add_property("int", "padding", kwargs.get("padding", 0))
-            self.add_property("dict", "rules", kwargs.get("rules", dict()))
-            self.create(**kwargs)
+            self.create(super_member)
 
         # set the property initialized
         self.is_initialized = True
@@ -81,14 +66,22 @@ class Member(object):
             return attribute
         except AttributeError:
             if self.super_member:
-                return object.__getattribute__(self.super_member, name)
+                return getattr(self.super_member, name)
 
         raise AttributeError("'{}' has no attribute '{}'".format(self.__class__, name))
 
     # methods
 
-    def create(self, **kwargs):
-        """Create the member."""
+    def create(self, super_member=None):
+        """Create the member.
+
+        Keyword Arguments:
+            super_member (Member, optional): A member to inherit from. Default to None.
+
+        """
+        # add the super member property to create inheritance systems
+        self.add_property("member", "super_member", super_member)
+        self.super_member_callback()
 
     def load(self):
         """Load the member from the project.
@@ -96,7 +89,8 @@ class Member(object):
         Returns:
             dict: The member's properties from the project.
         """
-        self.deserialize(self.project.get("{}.{}".format(self.project_path, self._id)))
+        data = self.project.get("{}.{}".format(self.project_path, self._id))
+        self.deserialize(data)
 
     def serialize(self):
         """Serialize the member's properties to write them in the project.
@@ -134,7 +128,7 @@ class Member(object):
         """Delete the current member from the project."""
         self.project.pop("{}.{}".format(self.project_path, self._id))
 
-    # member's properties
+    # properties methods
 
     def add_property(self, data_type, name, value, **kwargs):
         """Create and add a new property to this member.
@@ -215,6 +209,7 @@ class Member(object):
         if name in self.properties:
             self.properties.pop(name)
             delattr(self, name)
+            self._update_property(name)
 
     # private methods
 
@@ -233,16 +228,107 @@ class Member(object):
         _property.has_been_edited.connect(self.has_been_edited.emit)
         _property.has_been_edited.connect(lambda: self._update_property(name))
 
+        # connect the property to its callback
+        callback = "{}_callback".format(name)
+        if hasattr(self, callback):
+            _property.has_been_edited.connect(getattr(self, callback))
+
     def _update_property(self, name):
         """Update a property in the project.
 
         Arguments:
             name (str): The name of the property to udpate.
         """
-        _property = self.properties[name]
-        self.project.set(
-            "{}.{}.{}".format(self.project_path, self._id, name), _property.serialize()
-        )
+        # update the value of the property
+        if name in self.properties:
+            _property = self.properties[name]
+            self.project.set(
+                "{}.{}.{}".format(self.project_path, self._id, name),
+                _property.serialize(),
+            )
+        # remove the property
+        else:
+            self.project.pop("{}.{}.{}".format(self.project_path, self._id, name))
+
+    def _create_builtin_properties(self, **kwargs):
+        """Create the builtin properties of the member.
+
+        Builtin properties:
+            | name (str): The name to give to the member. It can be hard
+                    coded or made up of variables within braces.
+                    (e.g : "TheName", "Abstract_{concept}"). Default to "ClassName#".
+            | alias (int): The name to give to the member that overrides
+                the name. Default to None.
+            | index (int): The id of the member. Default to 0.
+            | padding (int): The number of digits in the index. Default to 4.
+            | rules (dict): The member's rules. Default to 4.
+        """
+        default_name = self.__class__.__name__ + str(self._id)
+        self.add_property("str", "name", kwargs.get("name", default_name))
+        self.add_property("str", "alias", kwargs.get("alias", ""))
+        self.add_property("int", "index", kwargs.get("index", 0))
+        self.add_property("int", "padding", kwargs.get("padding", 0))
+        self.add_property("dict", "rules", kwargs.get("rules", dict()))
+
+    # custom methods
+
+    def has_procedural_name(self):
+        """Get if the member has a procedural name or a fixed one.
+
+        Returns:
+            bool: true if the name is procedural, else False.
+        """
+        return "{" in self.name
+
+    def get_name(self):
+        """Get the name property's value.
+
+        If the name is a procedural name, it will return the formated name
+
+        Returns:
+            str: The formated name of the member.
+        """
+        name = self.name
+
+        if self.has_procedural_name():
+            # get the properties written in the procedural name
+            properties = dict()
+            for _property in strings.isolate_inbetween(name, "{", "}"):
+                # get recursive properties
+                if "." in _property:
+                    result = self
+                    for prop in _property.split("."):
+                        result = getattr(result, prop)
+                    properties["{%s}" % _property] = result
+                # get properties from this member
+                else:
+                    properties["{%s}" % _property] = getattr(self, _property)
+
+            # replace the properties in the name by their values
+            return strings.replace(name, properties.keys(), properties.values())
+
+        return name
+
+    # callback
+
+    def super_member_callback(self):
+        """Create a callback for the super member property."""
+        super_member = self.super_member
+
+        # merge the builtin properties of the member
+        if super_member:
+            properties = self.properties.copy()
+            for name, _property in properties.items():
+                super_member_property = super_member.get_property(name)
+                if super_member_property and _property == super_member_property:
+                    self.delete_property(name)
+            # remove the property's name if the super member has procedural names
+            if super_member.has_procedural_name():
+                self.delete_property("name")
+
+        # create the builtin properties of the member
+        else:
+            self._create_builtin_properties()
 
     # properties
 

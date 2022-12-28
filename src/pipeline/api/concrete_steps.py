@@ -8,18 +8,12 @@ class ConcreteStep(members.Member):
 
     project_path = "concrete.id"
 
-    def create(self, abstract_step, **kwargs):
-        """Create the member.
+    def _create_builtin_properties(self):
+        """Create the builtin properties of the member.
 
-        Arguments:
-            abstract_step (int, AbstractStep): The id or the abstract step this step
-                inherits from.
+        Builtin properties:
+            | parent (int): The id of the step this step should be parented to.
+                If 0, the step will be parented to the root. Default to 0.
         """
-        super(ConcreteStep, self).create(**kwargs)
-        self.add_property("int", "parent", kwargs.get("parent", 0))
-
-        # set the super member of this member
-        if isinstance(abstract_step, int):
-            self.super_member = self.project.get("abstract.id.{}".format(abstract_step))
-        else:
-            self.super_member = abstract_step
+        super(ConcreteStep, self)._create_builtin_properties()
+        self.add_property("int", "parent", 0)

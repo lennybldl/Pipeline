@@ -76,7 +76,7 @@ class Project(dictionaries.OrderedDictionary):
 
         return member
 
-    def add_concrete_step(self, abstract_step, *args, **kwargs):
+    def add_concrete_step(self, *args, **kwargs):
         """Add a concrete step to the project.
 
         Arguments:
@@ -87,9 +87,7 @@ class Project(dictionaries.OrderedDictionary):
         """
         # create the concrete step
         _id = self.get_available_concrete_id()
-        member = concrete_steps.ConcreteStep(
-            _id, abstract_step=abstract_step, *args, **kwargs
-        )
+        member = concrete_steps.ConcreteStep(_id, *args, **kwargs)
         self.add_member(member)
 
         # log the creation

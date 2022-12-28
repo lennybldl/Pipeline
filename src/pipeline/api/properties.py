@@ -11,7 +11,7 @@ class Property(object):
     """Create a property class to store informations."""
 
     data_type = None
-    value = None
+    default_value = None
     visibility = "public"
     display = True
 
@@ -47,6 +47,14 @@ class Property(object):
         # set the property initialized
         self.is_initialized = True
 
+    def __repr__(self):
+        """Override the __repr__ to visualize the property.
+
+        Returns:
+            str: the property representation.
+        """
+        return "({}){}:{}".format(self.visibility.title(), self.name, self.value)
+
     def __set__(self, instance, value):
         """Override the __set__ method to edit the value of the property.
 
@@ -58,14 +66,6 @@ class Property(object):
         """
         self.value = value
 
-    def __repr__(self):
-        """Override the __repr__ to visualize the property.
-
-        Returns:
-            str: the property representation.
-        """
-        return "({}){}:{}".format(self.visibility.title(), self.name, self.value)
-
     def __setattr__(self, name, value):
         """Override the __setattr__ to emit a signal when the property is edited."""
 
@@ -75,11 +75,37 @@ class Property(object):
         if self.is_initialized:
             self.has_been_edited.emit()
 
+    def __eq__(self, other):
+        """Compare two properties together.
+
+        Arguments:
+            other (object): The property object or the value to compare with.
+
+        Returns:
+            bool: True if they're equal, else False.
+        """
+        if isinstance(other, Property):
+            return self.serialize() == other.serialize()
+        return self.value == other
+
+    def __ne__(self, other):
+        """Compare two properties together.
+
+        Arguments:
+            other (object): The property object or the value to compare with.
+
+        Returns:
+            bool: True if they are not equal, else False.
+        """
+        if isinstance(other, Property):
+            return self.serialize() != other.serialize()
+        return self.value != other
+
     # methods
 
     def create(self, *args, **kwargs):
         """Create the property."""
-        self.value = kwargs.get("value", args[0] if args else self.value)
+        self.value = kwargs.get("value", args[0] if args else self.default_value)
         self.visibility = kwargs.pop("visibility", self.visibility)
         self.display = kwargs.pop("display", self.display)
 
@@ -130,7 +156,7 @@ class BoolProperty(Property):
     """Store a bool information."""
 
     data_type = "bool"
-    value = ""
+    default_value = ""
 
 
 class NumericProperty(Property):
@@ -138,6 +164,7 @@ class NumericProperty(Property):
 
     min = None
     max = None
+    default_value = 0
 
     # methods
 
@@ -168,49 +195,46 @@ class IntProperty(NumericProperty):
     """Store an integer information."""
 
     data_type = "int"
-    value = 0
 
 
 class FloatProperty(NumericProperty):
     """Store a float information."""
 
     data_type = "float"
-    value = 0
 
 
 class StrProperty(Property):
     """Store a string information."""
 
     data_type = "str"
-    value = ""
+    default_value = ""
 
 
 class ListProperty(Property):
     """Store a list information."""
 
     data_type = "list"
-    value = list()
+    default_value = list()
 
 
 class DictProperty(Property):
     """Store a dictionary information."""
 
     data_type = "dict"
-    value = dict()
+    default_value = dict()
 
 
 class EnumProperty(Property):
     """Store an enum information."""
 
     data_type = "enum"
-    value = list()
+    default_value = list()
 
 
 class MemberProperty(Property):
     """Store a member information."""
 
     data_type = "member"
-    value = None
 
     # methods
 
