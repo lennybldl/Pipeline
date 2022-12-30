@@ -54,7 +54,7 @@ class Member(object):
         """Get an attribute from the member or its super member.
 
         Arguments:
-            name (str): The name of the attribute of property.
+            name (str): The name of the attribute or property.
 
         Returns:
             -: The attribute.
@@ -96,10 +96,10 @@ class Member(object):
         """Serialize the member's properties to write them in the project.
 
         Returns:
-            OrderedDictionary: The dictionary ready for serialization.
+            Dictionary: The dictionary ready for serialization.
         """
 
-        serialization = dictionaries.OrderedDictionary()
+        serialization = dictionaries.Dictionary()
 
         # get the serialization order
         order = self.project.properties_order
@@ -130,15 +130,17 @@ class Member(object):
 
     # properties methods
 
-    def add_property(self, data_type, name, value, **kwargs):
+    def add_property(self, data_type, name, *args, **kwargs):
         """Create and add a new property to this member.
 
         Arguments:
             data_type (str): The property's data type.
             name (str): The name of the property.
-            value (-): The value to give to the property.
+
+        Returns:
+            Property: The created property.
         """
-        _property = properties.create(data_type, name, value, **kwargs)
+        _property = properties.create(data_type, name, *args, **kwargs)
         self._add_property(name, _property)
 
         # update the project with the new property
@@ -147,6 +149,8 @@ class Member(object):
         # emit a signal to stipulate that the member has been edited
         if self.is_initialized:
             self.has_been_edited.emit()
+
+        return _property
 
     def get_property(self, name, recursive=True):
         """Get a property of this member.

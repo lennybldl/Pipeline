@@ -9,7 +9,7 @@ from pipeline.internal import logging
 LOGGER = logging.ProjectLogger()
 
 
-class Project(dictionaries.OrderedDictionary):
+class Project(dictionaries.Dictionary):
     """Manage elements of the project."""
 
     def __init__(self, *args, **kwargs):

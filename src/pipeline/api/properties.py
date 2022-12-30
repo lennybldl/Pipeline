@@ -129,9 +129,9 @@ class Property(object):
         """Serialize the property to write it in the project.
 
         Returns:
-            OrderedDictionary: The dictionary ready for serialization.
+            Dictionary: The dictionary ready for serialization.
         """
-        serialization = dictionaries.OrderedDictionary()
+        serialization = dictionaries.Dictionary()
 
         # write the serialization
         serialization["setup"] = "{}-{}{}".format(
@@ -178,7 +178,7 @@ class NumericProperty(Property):
         """Serialize the property to write it in the project.
 
         Returns:
-            OrderedDictionary: The dictionary ready for serialization.
+            Dictionary: The dictionary ready for serialization.
         """
         serialization = super(NumericProperty, self).serialize()
 
@@ -260,6 +260,80 @@ class MemberProperty(Property):
             return "{}.{}".format(self.value.project_path, self.value._id)
 
 
+class CompoundProperty(Property):
+    """Store multiple properties information."""
+
+    data_type = "compound"
+
+    def __getitem__(self, name):
+        """Get an attribute from the property.
+
+        Arguments:
+            name (str): The name of the attribute or property.
+
+        Returns:
+            -: The attribute.
+        """
+        return self.value.get(name)
+
+    # methods
+
+    def create(self, *args, **kwargs):
+        """Create the property."""
+        super(CompoundProperty, self).create(*args, **kwargs)
+        self.value = dict()
+
+    def load(self, data):
+        """Load the property from a serialized dictionary.
+
+        Arguments:
+            data (dict): The data to recreate the property from.
+        """
+        # deserialize the value
+        self.value = dict()
+        for name, properties_data in data.pop("value").items():
+            self.value[name] = load(name, properties_data)
+
+        # deserialize the rest of the property
+        super(CompoundProperty, self).load(data)
+
+    def add_property(self, data_type, name, *args, **kwargs):
+        """Create and add a new property to this member.
+
+        Arguments:
+            data_type (str): The property's data type.
+            name (str): The name of the property.
+
+        Returns:
+            Property: The created property.
+        """
+        _property = create(data_type, name, *args, **kwargs)
+        self.value[name] = _property
+
+        # connect the property's signal to this property
+        _property.has_been_edited.connect(self.has_been_edited.emit)
+
+        # emit a signal to stipulate that the property has been changed
+        self.has_been_edited.emit()
+
+        return _property
+
+    # private methods
+
+    def _get_serialized_value(self):
+        """Get the value in a serialized form.
+
+        Returns:
+            -: The serialized value.
+        """
+        serialization = dictionaries.Dictionary()
+
+        for name, _property in self.value.items():
+            serialization[name] = _property.serialize()
+
+        return serialization
+
+
 INDEXES_TYPES = {
     "bool": BoolProperty,
     "int": IntProperty,
@@ -269,19 +343,19 @@ INDEXES_TYPES = {
     "dict": DictProperty,
     "enum": EnumProperty,
     "member": MemberProperty,
+    "compound": CompoundProperty,
 }
 
 
-def create(data_type, name, value, **kwargs):
+def create(data_type, name, *args, **kwargs):
     """Create a property.
 
     Arguments:
         data_type (str): The property's data type.
         name (str): The name of the property.
-        value (-): The value to give to the property.
     """
     _property = INDEXES_TYPES[data_type]
-    _property = _property(name, value, **kwargs)
+    _property = _property(name, *args, **kwargs)
     return _property
 
 
