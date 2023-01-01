@@ -14,6 +14,7 @@ RESOURCES = PACKAGE_PATH.get_folder("resources")
 IMAGES = RESOURCES.get_folder("images")
 FONTS = RESOURCES.get_folder("fonts")
 THEMES = RESOURCES.get_folder("themes")
+APP_RESOURCES = RESOURCES.get_folder("app_resources")
 
 # static values
 STATIC_CONCEPTS = {"global": 0, "asset": 1, "task": 2, "workfile": 3}
@@ -30,7 +31,7 @@ class Manager(object):
     project_name = None  # str : The project's name
     pipeline_path = None  # str : The path to the .pipeline folder.
     project_path = None  # str : The path to the pipeline project.
-    rules_path = None  # str : The path to the rules.
+    commands_path = None  # str : The path to the commands.
     log_path = None  # str : The path to the logs file.
 
     logger = logging.ProjectLogger()  # ProjectLogger : The logger of the project
@@ -111,7 +112,7 @@ class Manager(object):
         self.project_name = path.name
         self.pipeline_path = path.get_folder(".pipeline")
         self.project_path = self.pipeline_path.get_file("project.json")
-        self.rules_path = self.pipeline_path.get_folder("rules")
+        self.commands_path = self.pipeline_path.get_folder("commands")
         self.log_path = self.pipeline_path.get_file("log.log")
 
         # set the project path
@@ -130,3 +131,12 @@ def get_project():
         Project: The current project.
     """
     return Manager().project
+
+
+def get_software():
+    """Get the current softawre the pipeline is exected in.
+
+    Returns:
+        str: Thename of the current software.
+    """
+    return Manager().software

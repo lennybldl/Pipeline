@@ -39,8 +39,7 @@ class Project(dictionaries.Dictionary):
     def add_member(self, member):
         """Add a member to the project and write it."""
         # save the member in its serialized form
-        self.set("{}.{}".format(member.project_path, member._id), member.serialize())
-
+        self.set(member.full_project_path, member.serialize())
         # connect the member has_been_edited signal to the project signal
         member.has_been_edited.connect(self.has_been_edited.emit)
 

@@ -1,6 +1,6 @@
 """Manage the package common commands."""
 
-from pipeline.internal import command_calls, manager
+from pipeline.internal import manager
 
 MANAGER = None
 
@@ -117,189 +117,90 @@ def list_concepts():
     """List all the existing concepts.
 
     Returns:
-        list: A list of concept members.
+        list: A list of Concept members.
     """
     return MANAGER.project.list_concepts()
 
 
-def list_abstract_steps(self):
+def list_abstract_steps():
     """List all the existing abstract_steps.
 
     Returns:
-        list: A list of abstract_step members.
+        list: A list of AbstractStep members.
     """
     return MANAGER.project.list_abstract_steps()
 
 
-def list_concrete_steps(self):
+def list_concrete_steps():
     """List all the existing concrete_steps.
 
     Returns:
-        list: A list of concrete_step members.
+        list: A list of ConcreteStep members.
     """
     return MANAGER.project.list_concrete_steps()
-
-
-# get available ids
-
-
-def get_available_concept_id():
-    """Get the next available concept id.
-
-    Returns:
-        int: The available id.
-    """
-    return MANAGER.project.get_available_concept_id()
-
-
-def get_available_abstract_id():
-    """Get the next available abstract id.
-
-    Returns:
-        int: The available id.
-    """
-    return MANAGER.project.get_available_abstract_id()
-
-
-def get_available_concrete_id():
-    """Get the next available abstract id.
-
-    Returns:
-        int: The available id.
-    """
-    return MANAGER.project.get_available_concrete_id()
 
 
 # manipulate members
 
 
-def call(name, _id):
-    """Call a command for a specific concrete step.
+def call(member, name):
+    """Call a command for a specific member.
 
     Arguments:
+        member (Member, str): The member to work on. It can either be
+            a Member instance or the full path of the member in the project.
         name (str): The name of the command.
-        _id (int): The id of the concrete step.
     """
-    # get the commands to call
-    rules = get_rules(_id)
-    commands = rules.get("{}.{}".format(name, DATABASE.software), dict())
-    commands = commands.get("commands", list())
-
-    # call the commands
-    for command in commands:
-        if command.endswith(".py"):
-            command_calls.call_python_command(command, _id)
+    if isinstance(member, str):
+        member = MANAGER.project.get_member(member)
+    member.call(name)
 
 
-# get members informations
-
-
-def get_step_data(_id):
-    """Get the concrete and abstract data of a concrete step.
+def add_property(member, data_type, name, *args, **kwargs):
+    """Get a property on a specific member.
 
     Arguments:
-        _id (int): The id of the concrete step.
+        member (Member, str): The member to work on. It can either be
+            a Member instance or the full path of the member in the project.
+        data_type (str): The property's data type.
+        name (str): The name of the property to add.
 
     Returns:
-        tuple: The concrete data and the abstract data.
+        Property: The desired property's value.
     """
-    _id = get_concrete_step_id(_id)
-    return _id.get_data()
+    if isinstance(member, str):
+        member = MANAGER.project.get_member(member)
+    return member.add_property(data_type, name, *args, **kwargs)
 
 
-def get_step_path(_id, relative=False):
-    """Get the path of a concrete step.
+def get_property(member, name):
+    """Get a property on a specific member.
 
     Arguments:
-        _id (int): The id of the concrete step.
-
-    Keyword Arguments:
-        relative (bool, optional): To get the path relative to the project's path.
-            Default to False.
+        member (Member, str): The member to work on. It can either be
+            a Member instance or the full path of the member in the project.
+        name (str): The name of the property to get.
 
     Returns:
-        str: The step's path.
+        -: The desired property's value.
     """
-    _id = get_concrete_step_id(_id)
-    return _id.get_path(relative)
+    if isinstance(member, str):
+        member = MANAGER.project.get_member(member)
+    return getattr(member, name)
 
 
-def get_abstract_step_path(_id, relative=True):
-    """Get the abstract path of a abstract step.
+def set_property(member, name, value):
+    """Set a property's value on a specific member.
 
     Arguments:
-        _id (int): The abstract step id to get the abstract path from.
-
-    Keyword Arguments:
-        relative (bool, optional): To get the path relative to the project's path.
-            Default to True.
-
-    Returns:
-        str: The unformated procedural path of the abstract step.
-    """
-    _id = get_abstract_step_id(_id)
-    return _id.get_abstract_path(relative=relative)
-
-
-def get_step_name(_id):
-    """Get a concrete step's name.
-
-    Arguments:
-        _id (int): The id of the concrete step.
+        member (Member, str): The member to work on. It can either be
+            a Member instance or the full path of the member in the project.
+        name (str): The name of the property to set.
+        value (-): the value to set
 
     Returns:
-        str: The name of the step.
+        -: The desired property's value.
     """
-    _id = get_concrete_step_id(_id)
-    return _id.get_name()
-
-
-def get_rules(step):
-    """Get the rules that can be performed on a abstract step id or a concept id.
-
-    Arguments:
-        step (str, int): The id to get the rules from.
-            If it's an integer, the abstract step id.
-            If it's a string, the concept id written "cId".
-
-    Returns:
-        list: A list of rules names.
-    """
-    project = DATABASE.project
-    if isinstance(step, str):
-        member = project.get_concept_id(step.replace("c", ""))
-    else:
-        member = project.get_abstract_step_id(step)
-    return member.get_rules()
-
-
-def get_root_concept(_id):  # TODO : USELESS?
-    """Get the root concept of a abstract step.
-
-    Arguments:
-        _id (int): The id of the abstract step.
-
-    Returns:
-        int: The id of the root concept.
-    """
-
-    def recursively_find_root_concept(_id):
-        """Get if the abstract id's concept is in the root concept.
-
-        If not, try it's parent.
-
-        Arguments:
-            _id (int): The id of the abstract step.
-
-        Returns:
-            int: The id of the root concept.
-        """
-        if project.get("abstract.id.{}.concept".format(_id)) in root_concepts:
-            _id = recursively_find_root_concept(
-                project.get("abstract.id.{}.parent".format(_id))
-            )
-        return _id
-
-    project = DATABASE.project
-    root_concepts = database.ROOT_CONCEPTS
-    return recursively_find_root_concept(_id)
+    if isinstance(member, str):
+        member = MANAGER.project.get_member(member)
+    return setattr(member, name, value)
