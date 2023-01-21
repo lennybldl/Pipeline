@@ -12,14 +12,19 @@ LOGGER = logging.ProjectLogger()
 class Project(dictionaries.Dictionary):
     """Manage elements of the project."""
 
+    has_been_edited = False
+
     def __init__(self, *args, **kwargs):
         """Initialize the project."""
 
         # create signals
-        self.has_been_edited = signals.Signal()
+        self.changed = signals.Signal()
 
         # initialize the object
         super(Project, self).__init__(*args, **kwargs)
+
+        # connect signals
+        self.changed.connect(self.changed_signal)
 
     # global methods
 
@@ -31,8 +36,12 @@ class Project(dictionaries.Dictionary):
 
     def save(self):
         """Save the current project pipeline."""
-        self.dump()
-        LOGGER.info("Save")
+        if self.has_been_edited:
+            self.dump()
+            self.has_been_edited = False
+            LOGGER.info("Save")
+        else:
+            LOGGER.info("No changes to save")
 
     # add members
 
@@ -40,8 +49,8 @@ class Project(dictionaries.Dictionary):
         """Add a member to the project and write it."""
         # save the member in its serialized form
         self.set(member.full_project_path, member.serialize())
-        # connect the member has_been_edited signal to the project signal
-        member.has_been_edited.connect(self.has_been_edited.emit)
+        # connect the member changed signal to the project signal
+        member.changed.connect(self.changed.emit)
 
     def add_concept(self, *args, **kwargs):
         """Add a concept to the project.
@@ -127,7 +136,7 @@ class Project(dictionaries.Dictionary):
         # get the member
         member = concepts.Concept(_id=_id)
         # connect the member's signals
-        member.has_been_edited.connect(self.has_been_edited.emit)
+        member.changed.connect(self.changed.emit)
         return member
 
     def get_abstract_step(self, _id):
@@ -207,3 +216,9 @@ class Project(dictionaries.Dictionary):
         existing_ids = list(map(int, self.get("concrete.id").keys()))
         potential_ids = set(range(1, len(existing_ids) + 2))
         return list(potential_ids - set(existing_ids))[0]
+
+    # signals
+
+    def changed_signal(self):
+        """The mehod that is called when the project changed."""
+        self.has_been_edited = True

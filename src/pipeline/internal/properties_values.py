@@ -12,7 +12,7 @@ class DictionaryValue(dictionaries.Dictionary):
     parent = None
 
     def __getattribute__(self, name):
-        """Get an attribute from the value or its parent property.
+        """Get an attribute from the object or the dictionary content.
 
         Arguments:
             name (str): The name of the attribute or property.
@@ -23,33 +23,9 @@ class DictionaryValue(dictionaries.Dictionary):
         try:
             return object.__getattribute__(self, name)
         except AttributeError:
-            return getattr(self.parent, name)
-
-
-class PropertiesDictionaryValue(DictionaryValue):
-    """Manage a dictionary that stores properties."""
-
-    def __getitem__(self, name):
-        """Get a child property stored in the current dictionary.
-
-        Arguments:
-            name (str): The name of the property to get.
-
-        Returns:
-            -: The value of the property.
-        """
-        item = self.get(name)
-        return item.value if item else item
-
-    def __setitem__(self, name, value):
-        """Set the value of a child property.
-
-        Arguments:
-            name (str): The name of the property to set.
-            value (-): The value to set.
-        """
-        _property = self.get(name)
-        if _property:
-            _property.value = value
-        else:
-            super(PropertiesDictionaryValue, self).__setitem__(name, value)
+            attribute = self.get(name, AttributeError)
+            if attribute is AttributeError:
+                raise AttributeError(
+                    "'{}' has no attribute '{}'".format(self.parent.__class__, name)
+                )
+            return attribute

@@ -16,4 +16,4 @@ class AbstractStep(members.DesignMember):
                 If 0, the step will be parented to the root. Default to 0.
         """
         super(AbstractStep, self)._create_builtin_properties()
-        self.add_property("int", "parent", 0)
+        self.create_property("int", "parent", 0)

@@ -5,6 +5,7 @@ from python_core.types import dictionaries, signals
 from pipeline.api import commands
 from pipeline.internal import manager, properties_values
 
+MANAGER = manager.Manager()
 VISIBILITY_MODES = ["public", "protected", "private"]
 
 
@@ -12,9 +13,13 @@ class Property(object):
     """Create a property class to store informations."""
 
     data_type = None
+    _value = "public"
+    _visibility = "public"
+
     default_value = None
-    visibility = "public"
     display = True
+
+    editables = ["default_value", "display"]
 
     is_initialized = False
 
@@ -36,7 +41,7 @@ class Property(object):
                 in the UI. Default to True.
         """
         # create signals
-        self.has_been_edited = signals.Signal()
+        self.changed = signals.Signal()
 
         # initialize the object
         super(Property, self).__init__()
@@ -57,26 +62,6 @@ class Property(object):
         return "({}-{}){}:{}".format(
             self.visibility.title(), self.data_type, self.name, self.value
         )
-
-    def __set__(self, instance, value):
-        """Override the __set__ method to edit the value of the property.
-
-        Arguments:
-            instance (instance): Instance is the instance that the attribute was
-                accessed through, or None when the attribute is accessed
-                through the owner.
-            value (-): The value to set.
-        """
-        self.value = value
-
-    def __setattr__(self, name, value):
-        """Override the __setattr__ to emit a signal when the property is edited."""
-
-        super(Property, self).__setattr__(name, value)
-
-        # emit a signal to stipulate that the property has been edited
-        if self.is_initialized:
-            self.has_been_edited.emit()
 
     def __eq__(self, other):
         """Compare two properties together.
@@ -109,7 +94,7 @@ class Property(object):
     def create(self, *args, **kwargs):
         """Create the property."""
         # set the value
-        self._create_value(*args, **kwargs)
+        self.value = kwargs.get("value", args[0] if args else self.default_value)
         # create the property's setup
         self.visibility = kwargs.pop("visibility", self.visibility)
         self.display = kwargs.pop("display", self.display)
@@ -159,14 +144,6 @@ class Property(object):
 
     # private methods
 
-    def _create_value(self, *args, **kwargs):
-        """Create the value in a specific way.
-
-        Arguments:
-            value (-): The value of the property to format.
-        """
-        self.value = kwargs.get("value", args[0] if args else self.default_value)
-
     def _deserialize_value(self, value):
         """Deserialize the value in a specific way.
 
@@ -183,6 +160,84 @@ class Property(object):
         """
         return self.value
 
+    # custom methods
+
+    def get_attribute(self, name):
+        """Get the value of an attribute of the property.
+
+        Arguments:
+            name (str): The name of the attribute to get.
+
+        Returns:
+            -: The value of the attribute.
+        """
+        if name in self.editables:
+            return getattr(self, name)
+        else:
+            MANAGER.project_logger.error(
+                "{} object has no attribute '{}'".format(self.__class__.__name__, name)
+            )
+
+    def set_attribute(self, name, value):
+        """Set the value of an attribute of the property.
+
+        Arguments:
+            name (str): The name of the attribute to edit.
+            value (-): The value to set to the attribute.
+        """
+        if name in self.editables:
+            setattr(self, name, value)
+            self.changed.emit()
+        else:
+            MANAGER.project_logger.error(
+                "{} object has no attribute '{}'".format(self.__class__.__name__, name)
+            )
+
+    # properties
+
+    def get_visibility(self):
+        """Get the visibility of the property.
+
+        Returns:
+            str: The property's visibility
+        """
+        return self._visibility
+
+    def set_visibility(self, visibility):
+        """Set the visibility of the property.
+
+        Arguments:
+            visibility (str): The property's visibility.
+        """
+        if visibility in VISIBILITY_MODES:
+            self._visibility = visibility
+            self.changed.emit()
+        else:
+            MANAGER.project_logger.warning(
+                "{} isn't a valid visibility mode".format(visibility)
+            )
+
+    visibility = property(get_visibility, set_visibility)
+
+    def get_value(self):
+        """Get the value of the property.
+
+        Returns:
+            -: The value of the property.
+        """
+        return self._value
+
+    def set_value(self, value):
+        """Set the valueof the property.
+
+        Arguments:
+            value (-): Thevalue of the property.
+        """
+        self._value = value
+        self.changed.emit()
+
+    value = property(get_value, set_value)
+
 
 class BoolProperty(Property):
     """Store a bool information."""
@@ -197,6 +252,8 @@ class NumericProperty(Property):
     default_value = 0
     min = None
     max = None
+
+    editables = Property.editables + ["min", "max"]
 
     # methods
 
@@ -255,11 +312,21 @@ class DictProperty(Property):
     data_type = "dict"
     default_value = dict()
 
-    def _create_value(self, *args, **kwargs):
-        """Create the value of the property."""
-        super(DictProperty, self)._create_value(*args, **kwargs)
-        self.value = properties_values.DictionaryValue(self.value)
-        self.value.parent = self
+    def __getattribute__(self, name):
+        """Get an attribute from the value or its parent property.
+
+        Arguments:
+            name (str): The name of the attribute or property.
+
+        Returns:
+            -: The attribute.
+        """
+        try:
+            return object.__getattribute__(self, name)
+        except AttributeError:
+            return getattr(self.value, name)
+
+    # private methods
 
     def _deserialize_value(self, value):
         """Deserialize the value in a specific way.
@@ -269,6 +336,49 @@ class DictProperty(Property):
         """
         self.value = properties_values.DictionaryValue(value)
         self.value.parent = self
+
+    # custom methods
+
+    def get_attribute(self, name):
+        """Get the value of an attribute of the property.
+
+        Arguments:
+            name (str): The name of the attribute to get.
+
+        Returns:
+            -: The value of the attribute.
+        """
+        if "." in name:
+            print(name)
+            return self.value.get(name)
+        return super(DictProperty, self).get_attribute(name)
+
+    def set_attribute(self, name, value):
+        """Set the value of an attribute of the property.
+
+        Arguments:
+            name (str): The name of the attribute to edit.
+            value (-): The value to set to the attribute.
+        """
+        if "." in name:
+            self.value.set(name, value)
+            self.changed.emit()
+        else:
+            super(DictProperty, self).set_attribute(name, value)
+
+    # properties
+
+    def set_value(self, value):
+        """Set the valueof the property.
+
+        Arguments:
+            value (-): Thevalue of the property.
+        """
+        self._value = properties_values.DictionaryValue(value)
+        self._value.parent = self
+        self.changed.emit()
+
+    value = property(Property.get_value, set_value)
 
 
 class EnumProperty(Property):
@@ -284,29 +394,9 @@ class CompoundProperty(Property):
     data_type = "compound"
     default_value = dict()
 
-    def __getitem__(self, name):
-        """Get a child property stored in the compound property.
-
-        Arguments:
-            name (str): The name of the property to get.
-
-        Returns:
-            -: The value of the property.
-        """
-        return self.value[name]
-
-    def __setitem__(self, name, value):
-        """Set the value of a child property.
-
-        Arguments:
-            name (str): The name of the property to set.
-            value (-): The value to set.
-        """
-        self.value[name] = value
-
     # methods
 
-    def add_property(self, data_type, name, *args, **kwargs):
+    def create_property(self, data_type, name, *args, **kwargs):
         """Create and add a new property to this member.
 
         Arguments:
@@ -317,15 +407,23 @@ class CompoundProperty(Property):
             Property: The created property.
         """
         _property = create(data_type, name, *args, **kwargs)
+        self.add_property(_property)
+        return _property
+
+    def add_property(self, _property):
+        """Add a property to the current property.
+
+        Arguments:
+            _property (Property): The property to add.
+        """
+        name = _property.name
         self.value[name] = _property
 
         # connect the property's signal to this property
-        _property.has_been_edited.connect(self.has_been_edited.emit)
+        _property.changed.connect(self.changed.emit)
 
         # emit a signal to stipulate that the property has been changed
-        self.has_been_edited.emit()
-
-        return _property
+        self.changed.emit()
 
     def get_property(self, name):
         """Get a property object in the compound property.
@@ -347,15 +445,9 @@ class CompoundProperty(Property):
         if name in self.value:
             self.value.pop(name)
             # emit a signal to stipulate that the property has been changed
-            self.has_been_edited.emit()
+            self.changed.emit()
 
     # private methods
-
-    def _create_value(self, *args, **kwargs):
-        """Create the value of the property."""
-        super(CompoundProperty, self)._create_value(*args, **kwargs)
-        self.value = properties_values.PropertiesDictionaryValue(self.value)
-        self.value.parent = self
 
     def _deserialize_value(self, value):
         """Deserialize the value in a specific way.
@@ -363,10 +455,9 @@ class CompoundProperty(Property):
         Arguments:
             value (-): The value of the property to deserialize.
         """
-        self.value = properties_values.PropertiesDictionaryValue()
-        self.value.parent = self
+        self.value = dict()
         for name, properties_data in value.items():
-            self.value[name] = load(name, properties_data)
+            self.add_property(load(name, properties_data))
 
     def _serialize_value(self):
         """Get the value in a serialized form.
@@ -432,13 +523,13 @@ class CommandsProperty(DictProperty):
         if cmd is None:
             # create the command and connect its signal to this property
             cmd = commands.Command(command)
-            cmd.has_been_edited.connect(self.has_been_edited.emit)
+            cmd.changed.connect(self.changed.emit)
 
             # add the command to the property
             self.value.set(path, cmd)
 
             # emit a signal to stipulate that the property has been changed
-            self.has_been_edited.emit()
+            self.changed.emit()
             return cmd
 
     # private methods

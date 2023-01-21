@@ -9,7 +9,6 @@ from pipeline.internal import manager
 class Member(object):
     """Manage every member of the pipeline."""
 
-    super_member = None  # super_member (Member): The parent to inherit from
     properties = dict()  # properties (dict): Store the properties of the member
     project_path = ""  # project_path (str): The path to store the member in the project
 
@@ -22,7 +21,7 @@ class Member(object):
             super_member (Member, optional): A member to inherit from. Default to None.
         """
         # create signals
-        self.has_been_edited = signals.Signal()
+        self.changed = signals.Signal()
 
         # initialize the object
         super(Member, self).__init__()
@@ -39,47 +38,6 @@ class Member(object):
         # set the property initialized
         self.is_initialized = True
 
-    def __setattr__(self, name, value):
-        """Override the __setattr__ to set the properties values.
-
-        Arguments:
-            name (str): The name of the attribute to set.
-            value (value): The value to give to the attribute.
-        """
-        # edit the properties if possible, else edit a normal attribute
-        if not self.set_property(name, value):
-            super(Member, self).__setattr__(name, value)
-
-    def __getattribute__(self, name):
-        """Get an attribute from the member or its super member.
-
-        Arguments:
-            name (str): The name of the attribute or property.
-
-        Returns:
-            -: The attribute.
-        """
-        # get the attribute or property from the current member
-        try:
-            attribute = object.__getattribute__(self, name)
-            if isinstance(attribute, properties.Property):
-                return attribute.value
-            return attribute
-
-        # get the property from the super member
-        except AttributeError:
-            if self.super_member:
-                _property = self.super_member.get_property(name)
-                if _property:
-                    # copy the property and link it to the member
-                    _property = _property.copy()
-                    _property.has_been_edited.connect(
-                        lambda: self._update_property(_property)
-                    )
-                    return _property.value
-
-        raise AttributeError("'{}' has no attribute '{}'".format(self.__class__, name))
-
     # methods
 
     def create(self, super_member=None):
@@ -90,7 +48,7 @@ class Member(object):
 
         """
         # add the super member property to create inheritance systems
-        self.add_property("member", "super_member", super_member)
+        self.create_property("member", "super_member", super_member)
         self.super_member_callback()
 
     def load(self):
@@ -134,7 +92,7 @@ class Member(object):
         # deserialize the properties
         self.properties = dict()
         for name, value in data["properties"].items():
-            self._add_property(properties.load(name, value))
+            self.add_property(properties.load(name, value))
 
     def delete(self):
         """Delete the current member from the project."""
@@ -142,7 +100,7 @@ class Member(object):
 
     # properties methods
 
-    def add_property(self, data_type, name, *args, **kwargs):
+    def create_property(self, data_type, name, *args, **kwargs):
         """Create and add a new property to this member.
 
         Arguments:
@@ -153,8 +111,33 @@ class Member(object):
             Property: The created property.
         """
         _property = properties.create(data_type, name, *args, **kwargs)
-        self._add_property(_property)
+        self.add_property(_property)
         return _property
+
+    def add_property(self, _property):
+        """Add a property object to this member.
+
+        Arguments:
+            _property (Property): The porperty to add.
+        """
+        # add the property to the member's properties
+        name = _property.name
+        self.properties[name] = _property
+
+        # connect the property's signal to this member
+        _property.changed.connect(self.changed.emit)
+        _property.changed.connect(lambda: self._update_property(_property))
+
+        # connect the property to its callback
+        callback = "{}_callback".format(name)
+        if hasattr(self, callback):
+            _property.changed.connect(getattr(self, callback))
+
+        # update the project with the new property
+        self._update_property(_property)
+        # emit a signal to stipulate that the member has been edited
+        if self.is_initialized:
+            self.changed.emit()
 
     def get_property(self, name, recursive=True):
         """Get a property of this member.
@@ -169,8 +152,33 @@ class Member(object):
         Returns:
             Property, None: The desired property.
         """
-        _properties = self.get_properties() if recursive else self.properties
-        return _properties.get(name)
+        # get the property from the current member
+        if name in self.properties:
+            return self.properties[name]
+
+        # get the property from the super member
+        if recursive and self.super_member:
+            _property = self.super_member.get_property(name)
+            if _property:
+                # copy the property and link it to the member
+                _property = _property.copy()
+                _property.changed.connect(lambda: self._update_property(_property))
+                return _property
+
+        # return nothing if no property found
+        return
+
+    def delete_property(self, name):
+        """Delete a property from the member.
+
+        Arguments:
+            name (str): The name of the property.
+        """
+        if name in self.properties:
+            self.properties.pop(name)
+            self.project.pop(
+                "{}.{}.properties.{}".format(self.project_path, self._id, name)
+            )
 
     def get_properties(self):
         """Get all the properties available on this member.
@@ -184,70 +192,64 @@ class Member(object):
         properties.update(self.properties)
         return properties
 
-    def set_property(self, name, value):
-        """Set the value of a property.
+    # properties values methods
+
+    def get_value(self, name):
+        """Get the value of a property of this member.
 
         Arguments:
-            name (str): The name of the property.
-            value (-): The value to set to the property.
+            name (str): The name of the property's value to get.
 
         Returns:
-            bool: True if the value was set, else False.
+            Property, None: The desired property.
         """
-        # edit the properties
-        _property = self.get_property(name)
-        if _property:
-            # edit the property's value if it exists
-            if _property.name in self.properties:
-                _property.value = value
-                return True
-            # override the property if it is public
-            elif _property.visibility == "public":
-                self.add_property(_property.data_type, name, value)
-                return True
+        # get the super member
+        if name == "super_member":
+            _property = self.get_property("super_member")
+            return _property.value if _property else _property
 
-        return False
+        # get the value of any property of the member
+        elif "." in name:
+            property_name, attribute_name = name.split(".", 1)
+            # get a value from the super member
+            if property_name == "super_member":
+                return self.super_member.get_value(attribute_name)
+            # get a value from this member
+            _property = self.get_property(property_name)
+            return _property.get_attribute(attribute_name)
 
-    def delete_property(self, name):
-        """Delete a property from the member.
+        # get a value from this member
+        else:
+            _property = self.get_property(name)
+            return _property.value if _property else _property
+
+    def set_value(self, name, value):
+        """Set the value of a property of this member.
+
+        Edit the property's value if its a property of the member or a public property
+        of the super member
 
         Arguments:
-            name (str): The name of the property.
+            name (str): The name of the property's value to set.
+            value (-): The value to set.
         """
-        if name in self.properties:
-            self.properties.pop(name)
-            delattr(self, name)
-            self.project.pop(
-                "{}.{}.properties.{}".format(self.project_path, self._id, name)
-            )
+        # set an attribute on a property
+        if "." in name:
+            property_name, attribute_name = name.split(".", 1)
+            _property = self.get_property(property_name)
+            if _property and (
+                name in self.properties or _property.visibility == "public"
+            ):
+                _property.set_attribute(".".join(attribute_name), value)
+
+        else:
+            _property = self.get_property(name)
+            if _property and (
+                name in self.properties or _property.visibility == "public"
+            ):
+                _property.value = value
 
     # private methods
-
-    def _add_property(self, _property):
-        """Add a property object to this member.
-
-        Arguments:
-            _property (Property): The porperty to add.
-        """
-        # add the property to the member's properties
-        name = _property.name
-        super(Member, self).__setattr__(name, _property)
-        self.properties[name] = _property
-
-        # connect the property's signal to this member
-        _property.has_been_edited.connect(self.has_been_edited.emit)
-        _property.has_been_edited.connect(lambda: self._update_property(_property))
-
-        # connect the property to its callback
-        callback = "{}_callback".format(name)
-        if hasattr(self, callback):
-            _property.has_been_edited.connect(getattr(self, callback))
-
-        # update the project with the new property
-        self._update_property(_property)
-        # emit a signal to stipulate that the member has been edited
-        if self.is_initialized:
-            self.has_been_edited.emit()
 
     def _update_property(self, _property):
         """Update a property in the project.
@@ -255,9 +257,9 @@ class Member(object):
         Arguments:
             _property (Property): The porperty to update in the project.
         """
-        # add the property to the member
+        # add the property to the member if it isn't already in the member's properties
         if _property.name not in self.properties:
-            self._add_property(_property)
+            self.add_property(_property)
 
         # update the value of the property
         else:
@@ -280,11 +282,11 @@ class Member(object):
             | commands (dict): The member's commands. Default to dict().
         """
         default_name = self.__class__.__name__ + str(self._id)
-        self.add_property("str", "name", kwargs.get("name", default_name))
-        self.add_property("str", "alias", kwargs.get("alias", ""))
-        self.add_property("int", "index", kwargs.get("index", 0))
-        self.add_property("int", "padding", kwargs.get("padding", 0))
-        self.add_property("commands", "commands", kwargs.get("commands", dict()))
+        self.create_property("str", "name", kwargs.get("name", default_name))
+        self.create_property("str", "alias", kwargs.get("alias", ""))
+        self.create_property("int", "index", kwargs.get("index", 0))
+        self.create_property("int", "padding", kwargs.get("padding", 0))
+        self.create_property("commands", "commands", kwargs.get("commands", dict()))
 
     def _clean_properties(self):
         """Clean the properties to make the project lighter."""
@@ -305,31 +307,21 @@ class Member(object):
         Returns:
             bool: true if the name is procedural, else False.
         """
-        return "{" in self.name
+        return "{" in self.get_value("name")
 
-    def get_name(self):
-        """Get the name property's value.
-
-        If the name is a procedural name, it will return the formated name
+    def get_formated_name(self):
+        """Get the formated name of the member.
 
         Returns:
             str: The formated name of the member.
         """
-        name = self.name
+        name = self.get_value("name")
 
         if self.has_procedural_name():
             # get the properties written in the procedural name
             properties = dict()
             for _property in strings.isolate_inbetween(name, "{", "}"):
-                # get recursive properties
-                if "." in _property:
-                    result = self
-                    for prop in _property.split("."):
-                        result = getattr(result, prop)
-                    properties["{%s}" % _property] = result
-                # get properties from this member
-                else:
-                    properties["{%s}" % _property] = getattr(self, _property)
+                properties["{%s}" % _property] = self.get_value(_property)
 
             # replace the properties in the name by their values
             return strings.replace(name, properties.keys(), properties.values())
@@ -371,6 +363,24 @@ class Member(object):
             self._create_builtin_properties()
 
     # properties
+
+    def get_super_member(self):
+        """Get the super member of the member.
+
+        Returns:
+            Member: The super member.
+        """
+        return self.get_value("super_member")
+
+    def set_super_member(self, super_member):
+        """Set the super member of the member.
+
+        Arguments:
+            super_member (Member): The super member.
+        """
+        return self.set_value("super_member", super_member)
+
+    super_member = property(get_super_member, set_super_member)
 
     @property
     def project(self):

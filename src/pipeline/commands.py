@@ -156,7 +156,7 @@ def call(member, name):
     member.call(name)
 
 
-def add_property(member, data_type, name, *args, **kwargs):
+def create_property(member, data_type, name, *args, **kwargs):
     """Get a property on a specific member.
 
     Arguments:
@@ -170,7 +170,7 @@ def add_property(member, data_type, name, *args, **kwargs):
     """
     if isinstance(member, str):
         member = MANAGER.project.get_member(member)
-    return member.add_property(data_type, name, *args, **kwargs)
+    return member.create_property(data_type, name, *args, **kwargs)
 
 
 def get_property(member, name):

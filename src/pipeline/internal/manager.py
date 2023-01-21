@@ -34,7 +34,8 @@ class Manager(object):
     commands_path = None  # str : The path to the commands.
     log_path = None  # str : The path to the logs file.
 
-    logger = logging.ProjectLogger()  # ProjectLogger : The logger of the project
+    # ProjectLogger : The logger of the project
+    project_logger = logging.ProjectLogger()
 
     def __new__(cls, software="windows"):
         """Override the __new__ method to always return the same instance.
@@ -73,7 +74,7 @@ class Manager(object):
 
         # load the pipeline project
         self.path = path
-        self.logger.add_file_handler(self.log_path, mode="w")
+        self.project_logger.add_file_handler(self.log_path, mode="w")
 
     def create_project(self, path):
         """Create the pipeline folder and initialize.

@@ -16,7 +16,7 @@ class Command(list):
             name (str): The name of the command.
         """
         # create signals
-        self.has_been_edited = signals.Signal()
+        self.changed = signals.Signal()
 
         # initialize the command
         self.name = name
@@ -32,7 +32,7 @@ class Command(list):
             other (str): The script to append.
         """
         super(Command, self).append(scripts.ProjectPythonScript(other))
-        self.has_been_edited.emit()
+        self.changed.emit()
 
     def extend(self, others):
         """Extend a list of project scripts to the current command.
@@ -41,7 +41,7 @@ class Command(list):
             others (str): The list of scripts to extend.
         """
         super(Command, self).extend([scripts.ProjectPythonScript(o) for o in others])
-        self.has_been_edited.emit()
+        self.changed.emit()
 
     def call(self, member, *args, **kwargs):
         """Call the command by executing all its scripts.

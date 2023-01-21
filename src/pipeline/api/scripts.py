@@ -48,11 +48,11 @@ class PythonScript(Script):
             try:
                 module.execute(*args, **kwargs)
             except:  # noqa E722
-                MANAGER.logger.exception(
+                MANAGER.project_logger.exception(
                     "An error occured while executing - '{}'".format(self)
                 )
         else:
-            MANAGER.logger.warning(
+            MANAGER.project_logger.warning(
                 "Could not find an 'execute' function in - '{}'".format(self)
             )
 

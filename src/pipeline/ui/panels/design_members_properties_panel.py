@@ -100,7 +100,7 @@ class DesignMembersPropertiesPanel(abstract_panel.AbstractPanel):
             "command": self.concept_field.setCurrentIndex,
         }
 
-        # rules
+        # commands
         self.private_widget.layout.add_list_widget(stretch=1)
 
     # methods
