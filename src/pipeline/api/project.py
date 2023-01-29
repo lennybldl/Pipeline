@@ -26,6 +26,14 @@ class Project(dictionaries.Dictionary):
         # connect signals
         self.changed.connect(self.changed_signal)
 
+    def __repr__(self):
+        """Override the __repr__ to visualize the member.
+
+        Returns:
+            str: The member's representation.
+        """
+        return "<(Project){}>".format(self.path)
+
     # global methods
 
     def load(self, *args, **kwargs):
@@ -51,6 +59,8 @@ class Project(dictionaries.Dictionary):
         self.set(member.full_project_path, member.serialize())
         # connect the member changed signal to the project signal
         member.changed.connect(self.changed.emit)
+        # emit a signal
+        self.changed.emit()
 
     def add_concept(self, *args, **kwargs):
         """Add a concept to the project.
@@ -114,14 +124,14 @@ class Project(dictionaries.Dictionary):
         Returns:
             Member: The desired member.
         """
-        path, _, _id = path.rpartition(".")
-        if "concept" in path:
-            return self.get_concept(_id)
-        elif "abstract" in path:
-            return self.get_abstract_step(_id)
-        elif "concrete" in path:
-            return self.get_concrete_step(_id)
-
+        if path:
+            path, _, _id = path.rpartition(".")
+            if "concept" in path:
+                return self.get_concept(_id)
+            elif "abstract" in path:
+                return self.get_abstract_step(_id)
+            elif "concrete" in path:
+                return self.get_concrete_step(_id)
         return None
 
     def get_concept(self, _id):

@@ -4,20 +4,7 @@ import sys
 
 from python_core.types import items
 
-from pipeline.internal import logging
-
-LOGGER = logging.Logger("Pipeline Manager")
-
-# paths in package
-PACKAGE_PATH = items.File(__file__).get_upstream(4)
-RESOURCES = PACKAGE_PATH.get_folder("resources")
-IMAGES = RESOURCES.get_folder("images")
-FONTS = RESOURCES.get_folder("fonts")
-THEMES = RESOURCES.get_folder("themes")
-APP_RESOURCES = RESOURCES.get_folder("app_resources")
-
-# static values
-STATIC_CONCEPTS = {"global": 0, "asset": 1, "task": 2, "workfile": 3}
+from pipeline.internal import core
 
 
 class Manager(object):
@@ -33,9 +20,6 @@ class Manager(object):
     project_path = None  # str : The path to the pipeline project.
     commands_path = None  # str : The path to the commands.
     log_path = None  # str : The path to the logs file.
-
-    # ProjectLogger : The logger of the project
-    project_logger = logging.ProjectLogger()
 
     def __new__(cls, software="windows"):
         """Override the __new__ method to always return the same instance.
@@ -69,12 +53,12 @@ class Manager(object):
         # create the .pipeline folder if it doesn't exist
         path = items.Folder(path)
         if not path.get_folder(".pipeline").exists():
-            LOGGER.warning("The path doesn't exist.")
+            core.LOGGER.warning("The path doesn't exist.")
             return
 
         # load the pipeline project
         self.path = path
-        self.project_logger.add_file_handler(self.log_path, mode="w")
+        core.PROJECT_LOGGER.add_file_handler(self.log_path, mode="w")
 
     def create_project(self, path):
         """Create the pipeline folder and initialize.
@@ -91,7 +75,7 @@ class Manager(object):
         project_path.create()
 
         # create the pipeline folder for the project
-        pipeline_path = RESOURCES.get_folder(".pipeline")
+        pipeline_path = core.RESOURCES.get_folder(".pipeline")
         pipeline_path.copy(to=project_path.get_folder(".pipeline"))
 
     def get_path(self):
@@ -123,21 +107,3 @@ class Manager(object):
     # properties
 
     path = property(get_path, set_path)
-
-
-def get_project():
-    """Get the current project.
-
-    Returns:
-        Project: The current project.
-    """
-    return Manager().project
-
-
-def get_software():
-    """Get the current softawre the pipeline is exected in.
-
-    Returns:
-        str: Thename of the current software.
-    """
-    return Manager().software

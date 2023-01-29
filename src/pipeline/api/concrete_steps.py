@@ -8,12 +8,12 @@ class ConcreteStep(members.Member):
 
     project_path = "concrete.id"
 
-    def _create_builtin_properties(self):
+    def create_builtin_properties(self):
         """Create the builtin properties of the member.
 
         Builtin properties:
             | parent (int): The id of the step this step should be parented to.
                 If 0, the step will be parented to the root. Default to 0.
         """
-        super(ConcreteStep, self)._create_builtin_properties()
+        super(ConcreteStep, self).create_builtin_properties()
         self.create_property("int", "parent", 0)

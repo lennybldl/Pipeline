@@ -5,15 +5,7 @@ import sys
 
 from python_core.types import items
 
-from pipeline.internal import manager
-
-MANAGER = manager.Manager()
-
-# Use different modules to import modules considering the python version
-if MANAGER.python_version[0] == 2:
-    import imp
-else:
-    import importlib.util
+from pipeline.internal import core
 
 
 class Script(items.File):
@@ -27,15 +19,19 @@ class PythonScript(Script):
         """Call the pyhton script by executing the execute function of the script."""
 
         if not self.exists():
-            manager.LOGGER.warning(
+            core.LOGGER.warning(
                 "The script doesn't exist and cannot be called - '{}'".format(self)
             )
             return
 
-        # import the module
-        if MANAGER.python_version[0] == 2:
+        # import the module in a different way depending on the python version
+        if core.MANAGER.python_version[0] == 2:
+            import imp
+
             module = imp.load_source(self.name, self.path)
         else:
+            import importlib.util
+
             spec = importlib.util.spec_from_file_location(
                 self.name.replace(".py", ""), self.path
             )
@@ -48,11 +44,11 @@ class PythonScript(Script):
             try:
                 module.execute(*args, **kwargs)
             except:  # noqa E722
-                MANAGER.project_logger.exception(
+                core.PROJECT_LOGGER.exception(
                     "An error occured while executing - '{}'".format(self)
                 )
         else:
-            MANAGER.project_logger.warning(
+            core.PROJECT_LOGGER.warning(
                 "Could not find an 'execute' function in - '{}'".format(self)
             )
 
@@ -70,7 +66,7 @@ class ProjectPythonScript(PythonScript):
         """
         # get the path of the script, relative to the project's commands folder
         if os.path.isabs(path) or not os.path.exists(path):
-            path = os.path.join(MANAGER.commands_path, path)
+            path = os.path.join(core.MANAGER.commands_path, path)
 
         # initialize the pyton script
         super(ProjectPythonScript, self).__init__(path, *args, **kwargs)
@@ -85,7 +81,7 @@ class ProjectPythonScript(PythonScript):
                 self.directory.create()
 
             # create the default script
-            default_command = manager.APP_RESOURCES.get_file("default_command.py")
+            default_command = core.APP_RESOURCES.get_file("default_command.py")
             content = default_command.read()
             base_name = self.base_name
             self.write(content.format(name=base_name, title=base_name.title()))
@@ -107,4 +103,4 @@ class ProjectPythonScript(PythonScript):
         Returns:
             str: The relative path.
         """
-        return self.relative_to(MANAGER.commands_path)
+        return self.relative_to(core.MANAGER.commands_path)
