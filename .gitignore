@@ -1,4 +1,3 @@
 *.pyc
 .history/
 venv/
-src/pipeline.egg-info/

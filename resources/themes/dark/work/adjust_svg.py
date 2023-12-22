@@ -1,6 +1,6 @@
 """Adjust the svgs view box to be a square."""
 
-from python_core.types import items
+from lbx_python_core import items
 
 images_path = items.File(__file__).get_upstream(2)
 for _file in images_path.files():

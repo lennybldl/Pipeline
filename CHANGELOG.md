@@ -1,6 +1,6 @@
 ## [Unreleased]
 
-### changed
+### Changed
 - Cleaned up python package.
 - Changed the pipeline to be a procedural pipe that is not specific to a software.
 
@@ -8,7 +8,7 @@
 
 ## [1.0.0] - 19/01/2022
 
-### added
+### Added
 - disconnect from mocap the joints to export before publishing animation.
 
 ### Fixed

@@ -3,4 +3,4 @@
 - Update package version doc.config
 - Regenerate documentation
 - Works with start.bat
-- Add python_core in requirements
+- Add lbx_python_core in requirements

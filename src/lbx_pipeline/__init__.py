@@ -2,8 +2,9 @@
 
 import os
 
-from python_core.types import items
+from lbx_python_core import items
 
+NAME = "lbx_pipeline"
 VERSION = "2.0.0"
 PATH = items.File(__file__).get_upstream(3)
 

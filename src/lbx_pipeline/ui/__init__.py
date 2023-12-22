@@ -1,7 +1,7 @@
 """Manage the ui of the pipeline."""
 
-from pipeline import commands
-from pipeline.ui import main_window
+from lbx_pipeline import commands
+from lbx_pipeline.ui import main_window
 from PySide2.QtWidgets import QApplication
 
 
