@@ -54,7 +54,7 @@ class ConceptsListWidget(AbstractListWidget):
             return
 
         # add the concept items
-        static_ids = manager.STATIC_CONCEPTS.values()
+        static_ids = manager.STATIC_CONCEPTS.values()  # TODO : to remove
         for _id in project.get("concept.id").keys():
             _id = project.get_concept_id(_id)
 

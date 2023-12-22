@@ -157,31 +157,25 @@ class Member(object):
             name (str): The name of the property.
             value (str): The value to set to the property.
         """
-        # call the property's pre callback
-        callback = "{}_pre_callback".format(name)
-        if hasattr(self, callback):
-            getattr(self, callback)(value)
-
         # set an attribute on a property
         if "." in name:
             property_name, attribute_name = name.split(".", 1)
-            _property = self.get_property_object(property_name)
-            if _property and (
-                name in self.properties or _property.visibility == core.PUBLIC
-            ):
-                _property.edit(".".join(attribute_name), value)
         # set the value of a property
         else:
-            _property = self.get_property_object(name)
-            if _property and (
-                name in self.properties or _property.visibility == core.PUBLIC
-            ):
-                _property.edit("value", value)
+            property_name = name
+            attribute_name = "value"
 
-        # call the property's post callback
-        callback = "{}_post_callback".format(name)
-        if hasattr(self, callback):
-            getattr(self, callback)(value)
+        # set the property's attribute
+        _property = self.get_property_object(property_name)
+        if _property and (
+            name in self.properties or _property.visibility == core.PUBLIC
+        ):
+            _property.edit(attribute_name, value)
+            # refresh a property depending on its super member
+            if self.is_initialized:
+                self.refresh_property(name)
+                for member in self.sub_members:
+                    member.refresh_property(name)
 
     def delete_property(self, name):
         """Delete a property from the member.
@@ -196,7 +190,44 @@ class Member(object):
             )
             self.changed.emit()
 
-    # internal properties methods
+    def refresh_property(self, name):
+        """Refresh the member's property depending on the super member.
+
+        Arguments:
+            name (str): the name of the property to refresh.
+        """
+        # do not refresh if not super member or if it is a the sticky property
+        super_member = self.super_member
+        if not super_member or name in core.STICKY_PROPERTIES:
+            return
+
+        # do not clean if no super property
+        super_property = super_member.get_property_object(name)
+        if not super_property:
+            return
+
+        if name in self.properties:
+            # remove the name property if the super member has a procedural name
+            if name == "name" and super_member.has_procedural_name():
+                self.delete_property("name")
+                return
+
+            # get the property to compare to the super property
+            _property = self.get_property_object(name)
+
+            # compare the properties to define if they need to be changed
+            if super_property.visibility == core.PUBLIC:
+                # remove the property of the member if the properties are identical
+                if _property == super_property:
+                    self.delete_property(name)
+            # remove the property if the super property is protected
+            elif super_property.visibility == core.PROTECTED:
+                self.delete_property(name)
+            # add the property to the member if the super property is private
+            elif super_property.visibility == core.PRIVATE:
+                self.add_property_object(super_property.copy())
+
+    # properties objects methods
 
     def add_property_object(self, _property):
         """Add a property object to this member.
@@ -204,19 +235,18 @@ class Member(object):
         Arguments:
             _property (Property): The property to add.
         """
-        # add the property to the member's properties
-        name = _property.name
-        self.properties[name] = _property
+        if not _property.member == self:
+            # add the property to the member's properties
+            name = _property.name
+            self.properties[name] = _property
+            _property.member = self
 
-        # connect the property's signal to this member
-        _property.changed.connect(self.changed.emit)
-        _property.changed.connect(lambda: self.update_property(_property))
+            # connect the property's signal to this member
+            _property.changed.connect(self.changed.emit)
 
-        # write the new property in the project
-        self.update_property(_property)
-        # emit a signal to stipulate that the member has been edited
-        if self.is_initialized:
-            self.changed.emit()
+            # emit a signal to stipulate that the member has been edited
+            if self.is_initialized:
+                self.changed.emit()
 
     def get_property_object(self, name, recursive=True):
         """Get a property of this member.
@@ -239,10 +269,10 @@ class Member(object):
         super_member = self.super_member
         if recursive and super_member:
             _property = super_member.get_property_object(name)
-            if _property:
+            if _property and _property.visibility != core.PRIVATE:
                 # copy the property and link it to the member
                 _property = _property.copy()
-                _property.changed.connect(lambda: self.update_property(_property))
+                _property.changed.connect(self.add_property_object, _property)
                 return _property
 
         # return nothing if no property found
@@ -272,57 +302,6 @@ class Member(object):
         self.create_property("int", "index", "index")
         self.create_property("int", "padding", 0)
         self.create_property("commands", "commands", dict())
-
-    def update_property(self, _property):
-        """Update a property in the project.
-
-        Arguments:
-            _property (Property): The property to update in the project.
-        """
-        name = _property.name
-
-        # add the property to the member if it isn't already in the member's properties
-        if name not in self.properties:
-            self.add_property_object(_property)
-        # update the property in the project
-        else:
-            self.project.set(
-                "{}.properties.{}".format(self.full_project_path, name),
-                _property.serialize(),
-            )
-            # refresh all the children properties
-            if self.is_initialized:
-                self.refresh_property(name)
-                for member in self.sub_members:
-                    member.refresh_property(name)
-
-    def refresh_property(self, name):
-        """Refresh the member's property depending on the super member.
-
-        Arguments:
-            name (str): the name of the property to refresh.
-        """
-        # do not refresh if not super member or if it is a the sticky property
-        super_member = self.super_member
-        if not super_member or name in core.STICKY_PROPERTIES:
-            return
-
-        print(name, name in self.properties)
-        if name in self.properties:
-            # remove the name property if the super member has a procedural name
-            if name == "name" and super_member.has_procedural_name():
-                self.delete_property("name")
-                return
-
-            # get the property and the super property to compare them
-            _property = self.get_property_object(name)
-            super_property = super_member.get_property_object(name)
-
-            # compare the properties to define if they need to be changed
-            if super_property.visibility == core.PUBLIC:
-                # remove the property of the member if identical to the super property
-                if _property == super_property:
-                    self.delete_property(name)
 
     # custom methods
 
@@ -370,9 +349,9 @@ class Member(object):
         else:
             command.call(self)
 
-    # callback
+    # callbacks
 
-    def super_member_pre_callback(self, super_member):
+    def super_member_set_value_pre_callback(self, super_member):
         """Create a callback for the super member property.
 
         This callback will be called before setting the property.
@@ -385,7 +364,7 @@ class Member(object):
             sub_members = self.super_member.get_property_object("sub_members")
             sub_members.remove(self)
 
-    def super_member_post_callback(self, super_member):
+    def super_member_set_value_post_callback(self, super_member):
         """Create a callback for the super member property.
 
         This callback will be called after setting the property.

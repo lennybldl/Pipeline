@@ -1,0 +1,24 @@
+{
+    "global": {
+        "properies_order": [
+            "name",
+            "alias",
+            "parent",
+            "super_member",
+            "index",
+            "padding",
+            "commands",
+            "sub_members"
+        ]
+    },
+    "concept": {
+        "id": {}
+    },
+    "abstract": {
+        "id": {}
+    },
+    "concrete": {
+        "id": {},
+        "path": {}
+    }
+}

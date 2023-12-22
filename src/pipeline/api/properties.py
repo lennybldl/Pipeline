@@ -16,6 +16,7 @@ class Property(object):
     default_value = None
     display = True
 
+    member = None
     editables = ["value", "visibility", "default_value", "display"]
 
     is_initialized = False
@@ -149,7 +150,22 @@ class Property(object):
             value (-): The value to set to the attribute.
         """
         if name in self.editables:
+            # call the property's pre callback on the member
+            if self.member:
+                callback = "{}_set_{}_pre_callback".format(self.name, name)
+                if hasattr(self.member, callback):
+                    getattr(self.member, callback)(value)
+
+            # set the property's attribute
             setattr(self, name, value)
+
+            # call the property's post callback on the member
+            if self.member:
+                callback = "{}_set_{}_post_callback".format(self.name, name)
+                if hasattr(self.member, callback):
+                    getattr(self.member, callback)(value)
+
+            # emit a signal
             self.changed.emit()
         else:
             core.PROJECT_LOGGER.error(

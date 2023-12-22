@@ -1,4 +1,4 @@
-"""The rules to archive the step."""
+"""The commands to archive the step."""
 
 
 def execute(_id, *args, **kwargs):

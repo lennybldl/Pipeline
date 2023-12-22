@@ -1,4 +1,4 @@
-"""The rules to create the step."""
+"""The commands to create the step."""
 
 
 def execute(_id, *args, **kwargs):

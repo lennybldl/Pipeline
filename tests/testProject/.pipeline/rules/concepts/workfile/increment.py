@@ -1,4 +1,4 @@
-"""The rules to increment the step."""
+"""The commands to increment the step."""
 
 
 def execute(_id, *args, **kwargs):

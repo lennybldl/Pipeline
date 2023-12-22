@@ -3,9 +3,7 @@
 from python_core.pyside2.internal import style_sheets
 from python_core.types import dictionaries, strings
 
-from pipeline.internal import manager
-
-THEMES = manager.THEMES
+from pipeline.internal import core
 
 
 class Theme(dictionaries.Dictionary):
@@ -21,7 +19,7 @@ class Theme(dictionaries.Dictionary):
             theme (str): The name of the theme.
         """
         # get the theme path from its name
-        self.theme_folder = THEMES.get_folder(theme)
+        self.theme_folder = core.THEMES.get_folder(theme)
         theme_file = self.theme_folder.get_file("theme.json")
 
         # read the dictionary

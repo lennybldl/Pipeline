@@ -1,69 +1,99 @@
-import sys
-
-from python_core.types import items
-
-sys.path.insert(0, items.File(__file__).get_upstream(2) + "/src")
-
-from pipeline import commands  # noqa E402
-
-path = items.Folder(
-    r"C:\Users\Lenny\Documents\CODE_MesProjets\0020_Pipeline\tests\testProject"
-)
-if path.exists():
-    path.remove()
-
-commands.initialize(path)
+import json
 
 
-# ~ abstract steps
-assets = commands.add_abstract_step("asset", parent=0, name="ASSETS")
-characters = commands.add_abstract_step("asset", parent=assets, name="characters")
-chara = commands.add_abstract_step("asset", parent=characters, name="ch_{basename}")
-props = commands.add_abstract_step("asset", parent=assets, name="props")
-prop = commands.add_abstract_step("asset", parent=props, name="pr_{basename}")
+class Property(object):
+    def __init__(self, name, value, visibility="public"):
+        self.name = name
+        self.value = value
+        self.visibility = visibility  # public protected private
+        super(Property, self).__init__()
 
-# ~ add concepts
-concept = commands.add_concept(
-    name="Tasks",
-    rules={
-        "_same_as_": ["c2"],
-        "publish_unreal": {"windows": {"commands": ["publish_unreal.py"]}},
-    },
-)
-rig_task = commands.add_abstract_step(
-    "task", concept=concept, parent=chara, name="rig", task="rig"
-)
-rig_workfile = commands.add_abstract_step(
-    "workfile", parent=rig_task, name="{asset}_{index}_{comment}_{task}"
-)
+    def serialize(self):
+        return self.value
 
 
-# ~ concrete steps
-assets = commands.add_concrete_step(assets, parent=0)
-parent = commands.add_concrete_step(characters, parent=assets)
-first_chara = commands.add_concrete_step(
-    chara, parent=parent, basename="mon_premier_chara"
-)
-first_chara_rig_task = commands.add_concrete_step(rig_task, parent=first_chara)
-first_chara_rig_workfile = commands.add_concrete_step(
-    rig_workfile, parent=first_chara_rig_task, index=5, comment="firstFile"
-)
+class Member(object):
 
-parent = commands.add_concrete_step(props, parent=assets)
-first_prop = commands.add_concrete_step(
-    prop, parent=parent, basename="mon_premier_prop"
-)
+    parent = None
 
-# ~ calls
-commands.call("create", first_chara)
-commands.call("create", first_prop)
+    def __init__(self, parent=None):
+        super(Member, self).__init__()
 
-print(commands.get_rules(rig_task).dumps())
-print(commands.get_rules(prop).dumps())
+        if not parent:
+            self.name = Property("name", "toto")
+            self.age = Property("age", 0)
+            self.last_name = Property("last_name", "Doe", "protected")
+            self.properties = {
+                "name": self.name,
+                "age": self.age,
+                "last_name": self.last_name,
+            }
+        else:
+            self.parent = parent
+            self.properties = dict()
 
-from pipeline.api import elements, abstract_steps
+    def __setattr__(self, name, value):
+        if hasattr(self, name):
+            _property = getattr(self, name)
+            if isinstance(_property, Property):
+                if _property in self.properties:
+                    _property.value = value
+                elif _property.visibility == "public":
+                    self.add_property(name, value)
+                return
+        super(Member, self).__setattr__(name, value)
 
-_id = elements.Concept(3)
-print(_id.name)
-_id = abstract_steps.AbstractStep(3)
-print(_id.get_abstract_path())
+    def __getattribute__(self, name):
+        try:
+            return object.__getattribute__(self, name)
+        except:
+            return object.__getattribute__(self.parent, name)
+
+    def add_property(self, name, value, **kwargs):
+        _property = Property(name, value, **kwargs)
+        super(Member, self).__setattr__(name, _property)
+        self.properties[name] = _property
+
+    def delete_property(self, name):
+        if name in self.properties:
+            self.properties.pop(name)
+            delattr(self, name)
+
+    def serialize(self):
+        serialization = dict()
+        for name, _property in self.properties.items():
+            serialization[name] = _property.serialize()
+        return serialization
+
+
+class Project(dict):
+    def __repr__(self):
+        return json.dumps(self.serialize(), indent=4)
+
+    def add_member(self, _id, *args, **kwargs):
+        member = Member(*args, **kwargs)
+        self[_id] = member
+        return member
+
+    def get_member(self, _id):
+        return self[_id]
+
+    def serialize(self):
+        serialization = dict()
+        for _id, member in self.items():
+            serialization[_id] = member.serialize()
+        return serialization
+
+
+project = Project()
+parent = project.add_member(0)
+member = project.add_member(1, parent=parent)
+print(member.name.value)
+member = project.get_member(1)
+member.name = "titine"
+print(member.name.value)
+member.delete_property("name")
+print(member.name.value)
+member.age = 5
+member.last_name = "truc"
+print(project)

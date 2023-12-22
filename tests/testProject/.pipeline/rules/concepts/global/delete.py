@@ -1,4 +1,4 @@
-"""The rules to delete the step."""
+"""The commands to delete the step."""
 
 
 def execute(_id, *args, **kwargs):

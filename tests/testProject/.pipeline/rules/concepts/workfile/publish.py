@@ -1,4 +1,4 @@
-"""The rules to publish the step."""
+"""The commands to publish the step."""
 
 
 def execute(_id, *args, **kwargs):

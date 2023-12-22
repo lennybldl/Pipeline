@@ -3,10 +3,7 @@
 from python_core.types import dictionaries, signals
 
 from pipeline.api import abstract_steps, concepts, concrete_steps
-from pipeline.internal import logging
-
-
-LOGGER = logging.ProjectLogger()
+from pipeline.internal import core
 
 
 class Project(dictionaries.Dictionary):
@@ -20,11 +17,14 @@ class Project(dictionaries.Dictionary):
         # create signals
         self.changed = signals.Signal()
 
+        # create a variable to list the edited members
+        self.edited_members = dict()
+
         # initialize the object
         super(Project, self).__init__(*args, **kwargs)
 
         # connect signals
-        self.changed.connect(self.changed_signal)
+        self.changed.connect(self.project_changed_signal)
 
     def __repr__(self):
         """Override the __repr__ to visualize the member.
@@ -45,11 +45,16 @@ class Project(dictionaries.Dictionary):
     def save(self):
         """Save the current project pipeline."""
         if self.has_been_edited:
+            # save the project
+            for path, member in self.edited_members.items():
+                self.set(path, member.serialize())
             self.dump()
+            # reset the project variables
             self.has_been_edited = False
-            LOGGER.info("Save")
+            self.edited_members = dict()
+            core.PROJECT_LOGGER.info("Save")
         else:
-            LOGGER.info("No changes to save")
+            core.PROJECT_LOGGER.info("No changes to save")
 
     # add members
 
@@ -58,7 +63,7 @@ class Project(dictionaries.Dictionary):
         # save the member in its serialized form
         self.set(member.full_project_path, member.serialize())
         # connect the member changed signal to the project signal
-        member.changed.connect(self.changed.emit)
+        member.changed.connect(self.member_changed_signal, member)
         # emit a signal
         self.changed.emit()
 
@@ -74,7 +79,7 @@ class Project(dictionaries.Dictionary):
         self.add_member(member)
 
         # log the creation
-        LOGGER.debug("Add concept. ID : '{}'".format(_id))
+        core.PROJECT_LOGGER.debug("Add concept. ID : '{}'".format(_id))
 
         return member
 
@@ -90,7 +95,7 @@ class Project(dictionaries.Dictionary):
         self.add_member(member)
 
         # log the creation
-        LOGGER.debug("Add abstract step. ID : '{}'".format(_id))
+        core.PROJECT_LOGGER.debug("Add abstract step. ID : '{}'".format(_id))
 
         return member
 
@@ -109,7 +114,7 @@ class Project(dictionaries.Dictionary):
         self.add_member(member)
 
         # log the creation
-        LOGGER.debug("Add concrete step. ID : '{}'".format(_id))
+        core.PROJECT_LOGGER.debug("Add concrete step. ID : '{}'".format(_id))
 
         return member
 
@@ -124,15 +129,26 @@ class Project(dictionaries.Dictionary):
         Returns:
             Member: The desired member.
         """
+        # get the member from the edited members
+        if path in self.edited_members:
+            return self.edited_members[path]
+
+        # get the member from the project
+        member = None
         if path:
             path, _, _id = path.rpartition(".")
             if "concept" in path:
-                return self.get_concept(_id)
+                member = concepts.Concept(_id=_id)
             elif "abstract" in path:
-                return self.get_abstract_step(_id)
+                member = abstract_steps.AbstractStep(_id=_id)
             elif "concrete" in path:
-                return self.get_concrete_step(_id)
-        return None
+                member = concrete_steps.ConcreteStep(_id=_id)
+
+            # connect the member to the signals
+            if member:
+                member.changed.connect(self.member_changed_signal, member)
+
+        return member
 
     def get_concept(self, _id):
         """Get a concept id.
@@ -143,11 +159,7 @@ class Project(dictionaries.Dictionary):
         Returns:
             Concept: The concept as a Concept.
         """
-        # get the member
-        member = concepts.Concept(_id=_id)
-        # connect the member's signals
-        member.changed.connect(self.changed.emit)
-        return member
+        return self.get_member("concept.id.{}".format(_id))
 
     def get_abstract_step(self, _id):
         """Get a abstract step id.
@@ -158,7 +170,7 @@ class Project(dictionaries.Dictionary):
         Returns:
             AbstractStep: The step as an AbstractStep.
         """
-        return abstract_steps.AbstractStep(_id=_id)
+        return self.get_member("abstract.id.{}".format(_id))
 
     def get_concrete_step(self, _id):
         """Get a concrete step id.
@@ -169,7 +181,7 @@ class Project(dictionaries.Dictionary):
         Returns:
             ConcreteStep: The step as an ConcreteStep.
         """
-        return concrete_steps.ConcreteStep(_id=_id)
+        return self.get_member("concrete.id.{}".format(_id))
 
     def list_concepts(self):
         """List all the existing concepts.
@@ -229,6 +241,14 @@ class Project(dictionaries.Dictionary):
 
     # signals
 
-    def changed_signal(self):
+    def project_changed_signal(self):
         """The mehod that is called when the project changed."""
         self.has_been_edited = True
+
+    def member_changed_signal(self, member):
+        """The mehod that is called when the project changed."""
+        # sepcify that the project changed
+        self.changed.emit()
+        # add the member to the edited members
+        if member not in self.edited_members:
+            self.edited_members[member.full_project_path] = member

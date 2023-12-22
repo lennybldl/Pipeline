@@ -8,19 +8,16 @@ from python_core.pyside2 import base_ui
 
 import pipeline
 from pipeline import commands
-from pipeline.internal import manager
+from pipeline.internal import core
 from pipeline.ui.internal import themes
 from pipeline.ui.tabs import design_tab, project_tab
-
-
-IMAGES = manager.IMAGES
 
 
 class AbstractMainWindow(base_ui.MainWindow):
     """Only meant for inheritance manage the abstract behaviours of the main window."""
 
     _title = "Pipeline - {}".format(pipeline.VERSION)
-    _icon = IMAGES.get_file("pipe.png")
+    _icon = core.IMAGES.get_file("pipe.png")
 
     _theme = "dark"
 
@@ -47,7 +44,7 @@ class AbstractMainWindow(base_ui.MainWindow):
         # add an edit menu
         edit_menu = menu_bar.add_menu("Edit")
         themes_menu = edit_menu.add_menu("Themes")
-        for theme in manager.THEMES.folders():
+        for theme in core.THEMES.folders():
             theme = theme.name
             themes_menu.add_action(
                 theme, triggered=functools.partial(self.set_theme, theme)
@@ -76,7 +73,7 @@ class AbstractMainWindow(base_ui.MainWindow):
     def import_fonts(self):
         """Import the accessable fonts for the application."""
 
-        for font in manager.FONTS.files():
+        for font in core.FONTS.files():
             QFontDatabase.addApplicationFont(font)
 
     def get_theme(self):

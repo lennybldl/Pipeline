@@ -3,7 +3,7 @@
         "id": {
             "0": {
                 "name": "global",
-                "rules": {
+                "commands": {
                     "_same_as_": [],
                     "create": {
                         "windows": {
@@ -23,7 +23,7 @@
             },
             "1": {
                 "name": "asset",
-                "rules": {
+                "commands": {
                     "_same_as_": [
                         "c0"
                     ]
@@ -31,7 +31,7 @@
             },
             "2": {
                 "name": "task",
-                "rules": {
+                "commands": {
                     "_same_as_": [
                         "c0"
                     ]
@@ -39,7 +39,7 @@
             },
             "3": {
                 "name": "workfile",
-                "rules": {
+                "commands": {
                     "_same_as_": [
                         "c0"
                     ],

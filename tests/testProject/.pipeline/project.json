@@ -1,0 +1,252 @@
+{
+    "concept": {
+        "id": {
+            "0": {
+                "name": "global",
+                "commands": {
+                    "_same_as_": [],
+                    "create": {
+                        "windows": {
+                            "commands": [
+                                "concepts\\global\\create.py"
+                            ]
+                        }
+                    },
+                    "delete": {
+                        "windows": {
+                            "commands": [
+                                "concepts\\global\\delete.py"
+                            ]
+                        }
+                    }
+                }
+            },
+            "1": {
+                "name": "asset",
+                "commands": {
+                    "_same_as_": [
+                        "c0"
+                    ]
+                }
+            },
+            "2": {
+                "name": "task",
+                "commands": {
+                    "_same_as_": [
+                        "c0"
+                    ]
+                }
+            },
+            "3": {
+                "name": "workfile",
+                "commands": {
+                    "_same_as_": [
+                        "c0"
+                    ],
+                    "save": {
+                        "windows": {
+                            "commands": [
+                                "concepts\\workfile\\save.py"
+                            ]
+                        }
+                    },
+                    "increment": {
+                        "windows": {
+                            "commands": [
+                                "concepts\\workfile\\increment.py"
+                            ]
+                        }
+                    },
+                    "archive": {
+                        "windows": {
+                            "commands": [
+                                "concepts\\workfile\\archive.py"
+                            ]
+                        }
+                    },
+                    "publish": {
+                        "windows": {
+                            "commands": [
+                                "concepts\\workfile\\publish.py"
+                            ]
+                        }
+                    }
+                }
+            },
+            "4": {
+                "name": "Tasks",
+                "commands": {
+                    "_same_as_": [
+                        "c2"
+                    ],
+                    "publish_unreal": {
+                        "windows": {
+                            "commands": [
+                                "publish_unreal.py"
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "abstract": {
+        "index_padding": 4,
+        "id": {
+            "1": {
+                "type": "asset",
+                "name": "ASSETS",
+                "parent": 0,
+                "concept": 1,
+                "commands": {
+                    "_same_as_": [
+                        "c1"
+                    ]
+                }
+            },
+            "2": {
+                "type": "asset",
+                "name": "characters",
+                "parent": 1,
+                "concept": 1,
+                "commands": {
+                    "_same_as_": [
+                        "c1"
+                    ]
+                }
+            },
+            "3": {
+                "type": "asset",
+                "name": "ch_{basename}",
+                "parent": 2,
+                "concept": 1,
+                "commands": {
+                    "_same_as_": [
+                        "c1"
+                    ]
+                }
+            },
+            "4": {
+                "type": "asset",
+                "name": "props",
+                "parent": 1,
+                "concept": 1,
+                "commands": {
+                    "_same_as_": [
+                        "c1"
+                    ]
+                }
+            },
+            "5": {
+                "type": "asset",
+                "name": "pr_{basename}",
+                "parent": 4,
+                "concept": 1,
+                "commands": {
+                    "_same_as_": [
+                        "c1"
+                    ]
+                }
+            },
+            "6": {
+                "type": "task",
+                "name": "rig",
+                "parent": 3,
+                "concept": 4,
+                "task": "rig",
+                "commands": {
+                    "_same_as_": [
+                        "c4"
+                    ]
+                }
+            },
+            "7": {
+                "type": "workfile",
+                "name": "{asset}_{index}_{comment}_{task}",
+                "parent": 6,
+                "concept": 3,
+                "commands": {
+                    "_same_as_": [
+                        "c3"
+                    ]
+                }
+            }
+        }
+    },
+    "concrete": {
+        "id": {
+            "1": {
+                "abstract_id": 1,
+                "parent": 0,
+                "basename": "",
+                "index": null,
+                "comment": ""
+            },
+            "2": {
+                "abstract_id": 2,
+                "parent": 1,
+                "basename": "",
+                "index": null,
+                "comment": ""
+            },
+            "3": {
+                "abstract_id": 3,
+                "parent": 2,
+                "basename": "mon_premier_chara",
+                "index": null,
+                "comment": ""
+            },
+            "4": {
+                "abstract_id": 6,
+                "parent": 3,
+                "basename": "",
+                "index": null,
+                "comment": ""
+            },
+            "5": {
+                "abstract_id": 7,
+                "parent": 4,
+                "basename": "",
+                "index": 5,
+                "comment": "firstFile"
+            },
+            "6": {
+                "abstract_id": 4,
+                "parent": 1,
+                "basename": "",
+                "index": null,
+                "comment": ""
+            },
+            "7": {
+                "abstract_id": 5,
+                "parent": 6,
+                "basename": "mon_premier_prop",
+                "index": null,
+                "comment": ""
+            }
+        },
+        "path": {
+            "ASSETS": {
+                "id": 1
+            },
+            "ASSETS\\characters": {
+                "id": 2
+            },
+            "ASSETS\\characters\\ch_mon_premier_chara": {
+                "id": 3
+            },
+            "ASSETS\\characters\\ch_mon_premier_chara\\rig": {
+                "id": 4
+            },
+            "ASSETS\\characters\\ch_mon_premier_chara\\rig\\ch_mon_premier_chara_0005_firstFile_rig": {
+                "id": 5
+            },
+            "ASSETS\\props": {
+                "id": 6
+            },
+            "ASSETS\\props\\pr_mon_premier_prop": {
+                "id": 7
+            }
+        }
+    }
+}

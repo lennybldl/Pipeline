@@ -1,8 +1,6 @@
 """Manage the package common commands."""
 
-from pipeline.internal import manager
-
-MANAGER = None
+from pipeline.internal import core, manager
 
 
 def start(software):
@@ -11,8 +9,7 @@ def start(software):
     Arguments:
         software (str): The software we're executing the pipeline in.
     """
-    global MANAGER
-    MANAGER = manager.Manager(software=software)
+    core.MANAGER = manager.Manager(software=software)
 
 
 # edit project
@@ -24,7 +21,7 @@ def load_project(path):
     Arguments:
         path (str): The path to the project.
     """
-    MANAGER.load_project(path)
+    core.MANAGER.load_project(path)
 
 
 def create_project(path):
@@ -33,12 +30,12 @@ def create_project(path):
     Arguments:
         path (str): The path to create the pipeline to.
     """
-    MANAGER.create_project(path)
+    core.MANAGER.create_project(path)
 
 
 def save():
     """Save the current project pipeline."""
-    MANAGER.project.save()
+    core.MANAGER.project.save()
 
 
 # add members
@@ -50,7 +47,7 @@ def add_concept(*args, **kwargs):
     Returns:
         Concept: The id of the added concept.
     """
-    return MANAGER.project.add_concept(*args, **kwargs)
+    return core.MANAGER.project.add_concept(*args, **kwargs)
 
 
 def add_abstract_step(*args, **kwargs):
@@ -59,7 +56,7 @@ def add_abstract_step(*args, **kwargs):
     Returns:
         AbstractStep: The id of the added abstract step.
     """
-    return MANAGER.project.add_abstract_step(*args, **kwargs)
+    return core.MANAGER.project.add_abstract_step(*args, **kwargs)
 
 
 def add_concrete_step(*args, **kwargs):
@@ -71,7 +68,7 @@ def add_concrete_step(*args, **kwargs):
     Returns:
         int: The id of the added concrete step.
     """
-    return MANAGER.project.add_concrete_step(*args, **kwargs)
+    return core.MANAGER.project.add_concrete_step(*args, **kwargs)
 
 
 # get existing members
@@ -86,7 +83,7 @@ def get_concept(_id):
     Returns:
         Concept: The concept.
     """
-    return MANAGER.project.get_concept(_id)
+    return core.MANAGER.project.get_concept(_id)
 
 
 def get_abstract_step(_id):
@@ -98,7 +95,7 @@ def get_abstract_step(_id):
     Returns:
         AbstractStep: The abstract step.
     """
-    return MANAGER.project.get_abstract_step(_id)
+    return core.MANAGER.project.get_abstract_step(_id)
 
 
 def get_concrete_step(_id):
@@ -110,7 +107,7 @@ def get_concrete_step(_id):
     Returns:
         ConcreteStep: The concrete step.
     """
-    return MANAGER.project.get_concrete_step(_id)
+    return core.MANAGER.project.get_concrete_step(_id)
 
 
 def list_concepts():
@@ -119,7 +116,7 @@ def list_concepts():
     Returns:
         list: A list of Concept members.
     """
-    return MANAGER.project.list_concepts()
+    return core.MANAGER.project.list_concepts()
 
 
 def list_abstract_steps():
@@ -128,7 +125,7 @@ def list_abstract_steps():
     Returns:
         list: A list of AbstractStep members.
     """
-    return MANAGER.project.list_abstract_steps()
+    return core.MANAGER.project.list_abstract_steps()
 
 
 def list_concrete_steps():
@@ -137,7 +134,7 @@ def list_concrete_steps():
     Returns:
         list: A list of ConcreteStep members.
     """
-    return MANAGER.project.list_concrete_steps()
+    return core.MANAGER.project.list_concrete_steps()
 
 
 # manipulate members
@@ -152,7 +149,7 @@ def call(member, name):
         name (str): The name of the command.
     """
     if isinstance(member, str):
-        member = MANAGER.project.get_member(member)
+        member = core.MANAGER.project.get_member(member)
     member.call(name)
 
 
@@ -169,7 +166,7 @@ def create_property(member, data_type, name, *args, **kwargs):
         Property: The desired property's value.
     """
     if isinstance(member, str):
-        member = MANAGER.project.get_member(member)
+        member = core.MANAGER.project.get_member(member)
     return member.create_property(data_type, name, *args, **kwargs)
 
 
@@ -185,7 +182,7 @@ def get_property(member, name):
         -: The desired property's value.
     """
     if isinstance(member, str):
-        member = MANAGER.project.get_member(member)
+        member = core.MANAGER.project.get_member(member)
     return getattr(member, name)
 
 
@@ -202,5 +199,5 @@ def set_property(member, name, value):
         -: The desired property's value.
     """
     if isinstance(member, str):
-        member = MANAGER.project.get_member(member)
+        member = core.MANAGER.project.get_member(member)
     return setattr(member, name, value)
